@@ -48,6 +48,7 @@ app.get("/getUsers", async (req, res) => {
 });
 
 
+/*
 app.post("/register", async (req, res) => {
     try {
         // Create new user object from POST request
@@ -60,12 +61,13 @@ app.post("/register", async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+*/
 
 // Route for register new user
-app.post("/register2", async (req, res) => {
+app.post("/register", async (req, res) => {
     try {
         const { email, username, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10); // Verschlüsseln des Passworts
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new UserModel({
             email,
