@@ -118,9 +118,24 @@ const tradeSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    offer: {
+        type: Number,
+        required: true
+    },
+    counterOffer: {
+        type: Number,
+        default: null
+    },
+    offerHistory: [{
+        type: Number
+    }],
+    acceptedPrice: {
+        type: Number,
+        default: null
     }
 });
-
+    
 const TradeModel = mongoose.model("Trade", tradeSchema);
 
 // Route für Handelsanfrage senden
