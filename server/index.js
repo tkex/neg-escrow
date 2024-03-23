@@ -61,7 +61,7 @@ app.post("/register", async (req, res) => {
         });
 
         await newUser.save();
-        res.status(201).json({ message: "Benutzer erfolgreich registriert." });
+        res.status(201).json({ message: "Benutzer wurde erfolgreich registriert." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -87,54 +87,72 @@ app.post("/login", async (req, res) => {
 
 
 const tradeSchema = new mongoose.Schema({
+    // Sender
     sender: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
+    // Empfänger
     receiver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
+    // Typ der Verhandlung
     tradeType: {
         type: String,
         enum: ['Angebot'],
         required: true
     },
+    // Mögliche Stati einer Verhandlung, standardgemäß "pending"
     status: {
         type: String,
         enum: ['pending', 'accepted', 'rejected', 'confirmed', 'cancelled'],
         default: 'pending'
     },
+    // Verhandlungstatus vom Sender, standardgemäß: false
     senderConfirmed: {
         type: Boolean,
         default: false
     },
+    // Verhandlungstatus vom Empfänger, standardgemäß: false
     receiverConfirmed: {
         type: Boolean,
         default: false
     },
+    // Datum-Zeitstempel
     createdAt: {
         type: Date,
         default: Date.now
     },
-    offer: {
+    // Initialangebot vom Sender
+    initOffer: {
         type: Number,
         required: true
     },
-    counterOffer: {
+     // Aktuelles Angebot -- entspricht am Anfang "initialOffer"
+    currentOffer: {
         type: Number,
-        default: null
+        required: true
     },
+    // Auflistung aller Angebote und Gegenangebote zwecks Nachvollziehung
     offerHistory: [{
         type: Number
     }],
+    // Der endgültig akzeptierte Preis
     acceptedPrice: {
         type: Number,
         default: null
+    },
+     // Zeigt, wer das letzte Angebot gemacht hat
+    lastOfferBy: {
+        type: String,
+        enum: ['sender', 'receiver'],
+        required: true
     }
 });
+
     
 const TradeModel = mongoose.model("Trade", tradeSchema);
 
