@@ -146,7 +146,7 @@ app.post("/trade/request", async (req, res) => {
 
         // Checking tradeType; if different than 'Angebot', return 400 error
         if (!['Angebot'].includes(tradeType)) {
-            return res.status(400).json({ message: "Invalid trade type." });
+            return res.status(400).json({ message: "Ungültiger Handelstyp." });
         }
 
         // New TradeModel instance
@@ -156,7 +156,44 @@ app.post("/trade/request", async (req, res) => {
         await newTrade.save();
         
         // If the trade is successfully saved, show 201 status + msg.
-        res.status(201).json({ message: "Trade request sent." });
+        res.status(201).json({ message: "Handelsanfrage gesendet." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
+// Handelsanfrage annehmen/ablehnen
+app.post("/trade/confirm", async (req, res) => {
+    try {
+        // Extract tradeId and userId from the request body
+        const { tradeId, userId } = req.body;
+
+        // Find trade in the database via its tradeId
+        const trade = await TradeModel.findById(tradeId);
+        
+        // Check first if the trade exists and if user has permission to confirm it
+        if (!trade || (trade.sender.toString() !== userId && trade.receiver.toString() !== userId)) {
+            return res.status(404).json({ message: "Handel nicht gefunden (oder ungültige Berechtigung)." });
+        }
+        
+        // Set sender or receiver ti have confirmed the trade (depending on who is making the request)
+        if (trade.sender.toString() === userId) {
+            trade.senderConfirmed = true;
+        } else if (trade.receiver.toString() === userId) {
+            trade.receiverConfirmed = true;
+        }
+        
+        // If both - sender and receiver - have confirmed, change trade status to confirmed
+        if (trade.senderConfirmed && trade.receiverConfirmed) {
+            trade.status = 'confirmed';
+        }
+        
+        // Save this trades new status to the database
+        await trade.save();
+
+        // Show the confirm msg
+        res.json({ message: "Handel bestätigt." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
