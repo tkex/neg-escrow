@@ -41,14 +41,14 @@ const userSchema = new mongoose.Schema({
 
 const UserModel = mongoose.model("User", userSchema);
 
-// Route to get users
+// Route für User Abfrage (get)
 app.get("/getUsers", async (req, res) => {
     const users = await UserModel.find();
     res.json(users);
 });
 
 
-// Route for register new user
+// Route für Registrierung
 app.post("/register", async (req, res) => {
     try {
         const { email, username, password } = req.body;
@@ -67,7 +67,7 @@ app.post("/register", async (req, res) => {
     }
 });
 
-// Route for user login
+// Route für User-Login
 app.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -76,7 +76,7 @@ app.post("/login", async (req, res) => {
         if (user && await bcrypt.compare(password, user.password)) {
             // Successful Login
             res.json({ message: "Erfolgreich angemeldet!" });
-        } else {
+        } else {            
             // Login failed
             res.status(400).json({ message: "Anmeldung fehlgeschlagen!" });
         }
@@ -123,7 +123,7 @@ const tradeSchema = new mongoose.Schema({
 
 const TradeModel = mongoose.model("Trade", tradeSchema);
 
-// Handelsanfrage senden
+// Route für Handelsanfrage senden
 app.post("/trade/request", async (req, res) => {
     try {
         // Get tradeId, userId, tradeType from the passed request body
@@ -149,7 +149,7 @@ app.post("/trade/request", async (req, res) => {
 });
 
 
-// Handelsanfrage annehmen/ablehnen
+// Route für Handelsanfrage annehmen/ablehnen
 app.post("/trade/confirm", async (req, res) => {
     try {
         // Get tradeId and userId from the passed request body
@@ -186,7 +186,7 @@ app.post("/trade/confirm", async (req, res) => {
     }
 });
 
-// Handel abbrechen
+// Route für Handel abbrechen
 app.post("/trade/cancel", async (req, res) => {
     try {
         // Get tradeId and userId from the passed request body
