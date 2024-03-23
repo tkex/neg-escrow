@@ -48,21 +48,6 @@ app.get("/getUsers", async (req, res) => {
 });
 
 
-/*
-app.post("/register", async (req, res) => {
-    try {
-        // Create new user object from POST request
-        const newUser = new UserModel(req.body); 
-        // Save the user in the db
-        const savedUser = await newUser.save();
-        // Send saved user as response
-        res.status(201).json(savedUser);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-*/
-
 // Route for register new user
 app.post("/register", async (req, res) => {
     try {
@@ -141,7 +126,7 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 // Handelsanfrage senden
 app.post("/trade/request", async (req, res) => {
     try {
-        // Extract sender, receive + tradeType from request body
+        // Get tradeId, userId, tradeType from the passed request body
         const { sender, receiver, tradeType } = req.body;
 
         // Checking tradeType; if different than 'Angebot', return 400 error
@@ -157,6 +142,7 @@ app.post("/trade/request", async (req, res) => {
         
         // If the trade is successfully saved, show 201 status + msg.
         res.status(201).json({ message: "Handelsanfrage gesendet." });
+        
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -166,7 +152,7 @@ app.post("/trade/request", async (req, res) => {
 // Handelsanfrage annehmen/ablehnen
 app.post("/trade/confirm", async (req, res) => {
     try {
-        // Extract tradeId and userId from the request body
+        // Get tradeId and userId from the passed request body
         const { tradeId, userId } = req.body;
 
         // Find trade in the database via its tradeId
@@ -174,7 +160,7 @@ app.post("/trade/confirm", async (req, res) => {
         
         // Check first if the trade exists and if user has permission to confirm it
         if (!trade || (trade.sender.toString() !== userId && trade.receiver.toString() !== userId)) {
-            return res.status(404).json({ message: "Handel nicht gefunden (oder ungültige Berechtigung)." });
+            return res.status(404).json({ message: "Handel nicht gefunden (oder keine Berechtigung)." });
         }
         
         // Set sender or receiver ti have confirmed the trade (depending on who is making the request)
@@ -194,6 +180,35 @@ app.post("/trade/confirm", async (req, res) => {
 
         // Show the confirm msg
         res.json({ message: "Handel bestätigt." });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Handel abbrechen
+app.post("/trade/cancel", async (req, res) => {
+    try {
+        // Get tradeId and userId from the passed request body
+        const { tradeId, userId } = req.body;
+
+        // Find trade in database via its tradeId
+        const trade = await TradeModel.findById(tradeId);
+        
+        // Check if the trade exists and if the user has permission to cancel it
+        if (!trade || (trade.sender.toString() !== userId && trade.receiver.toString() !== userId)) {
+            return res.status(404).json({ message: "Handel nicht gefunden oder keine Berechtigung." });
+        }
+         
+        // Setting the trade status to status: cancelled
+        trade.status = 'cancelled';
+
+        // Save the trades new status        
+        await trade.save();
+
+        // Respond with a success msg
+        res.json({ message: "Handel abgebrochen." });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
