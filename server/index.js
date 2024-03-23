@@ -199,7 +199,11 @@ app.post("/trade/cancel", async (req, res) => {
         if (!trade || (trade.sender.toString() !== userId && trade.receiver.toString() !== userId)) {
             return res.status(404).json({ message: "Handel nicht gefunden oder keine Berechtigung." });
         }
-         
+        
+       // Trade cannot be cancelled if it has already been confirmed by both parties
+       if (trade.status === 'confirmed') {
+        return res.status(400).json({ message: "Handel wurde bereits bestätigt und kann nicht abgebrochen werden." });
+    }
         // Setting the trade status to status: cancelled
         trade.status = 'cancelled';
 
