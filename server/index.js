@@ -101,3 +101,39 @@ app.post("/login", async (req, res) => {
 });
 
 
+const tradeSchema = new mongoose.Schema({
+    sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    receiver: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    tradeType: {
+        type: String,
+        enum: ['Angebot'],
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'accepted', 'rejected', 'confirmed', 'cancelled'],
+        default: 'pending'
+    },
+    senderConfirmed: {
+        type: Boolean,
+        default: false
+    },
+    receiverConfirmed: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const TradeModel = mongoose.model("Trade", tradeSchema);
