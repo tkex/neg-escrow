@@ -137,3 +137,27 @@ const tradeSchema = new mongoose.Schema({
 });
 
 const TradeModel = mongoose.model("Trade", tradeSchema);
+
+// Handelsanfrage senden
+app.post("/trade/request", async (req, res) => {
+    try {
+        // Extract sender, receive + tradeType from request body
+        const { sender, receiver, tradeType } = req.body;
+
+        // Checking tradeType; if different than 'Angebot', return 400 error
+        if (!['Angebot'].includes(tradeType)) {
+            return res.status(400).json({ message: "Invalid trade type." });
+        }
+
+        // New TradeModel instance
+        const newTrade = new TradeModel({ sender, receiver, tradeType });
+
+        // Save this trade to database
+        await newTrade.save();
+        
+        // If the trade is successfully saved, show 201 status + msg.
+        res.status(201).json({ message: "Trade request sent." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
