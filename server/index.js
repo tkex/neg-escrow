@@ -160,7 +160,11 @@ const tradeSchema = new mongoose.Schema({
         default: null
     },
     // Zur Überprüfung, ob ein Gegenangebot gemacht wurde
-    hasCounterOffer: {
+    senderHasMadeCounterOffer: {
+        type: Boolean,
+        default: false
+    },
+    receiverHasMadeCounterOffer: {
         type: Boolean,
         default: false
     },
@@ -187,10 +191,13 @@ app.post("/trade/request", async (req, res) => {
             tradeType,
             initOffer,
             currentOffer: initOffer, // Setze initOffer als currentOffer
-            lastOfferBy: 'sender' // Sender hat das erste Angebot gemacht
+            lastOfferBy: 'sender', // Sender hat das erste Angebot gemacht
+            senderConfirmed: true, // Setze senderConfirmed auf true
+            offerHistory: [initOffer] // Füge initOffer zur offerHistory hinzu
         });
         
 
+        // Sender hat das erste Angebot gemacht
         await newTrade.save();
         res.status(201).json({ message: "Handelsanfrage gesendet.", tradeId: newTrade._id });
 
@@ -220,17 +227,29 @@ app.post("/trade/confirm", async (req, res) => {
 
         // Gegenangebot machen
         if (action === 'counter' && counterOffer) {
-            if (trade.status === 'pending' && !trade.hasCounterOffer) {
+            // Bestimme, ob der aktuelle Nutzer der Empfänger oder Sender ist
+            let isReceiver = trade.receiver.toString() === userId;
+            let isSender = trade.sender.toString() === userId;
 
+            // Logik für Empfänger, um ein Gegenangebot zu machen
+            if (isReceiver && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
+                trade.receiverHasMadeCounterOffer = true;
                 trade.counterOffer = counterOffer;
                 trade.offerHistory.push(counterOffer);
                 trade.currentOffer = counterOffer;
-                trade.hasCounterOffer = true;
-                trade.lastOfferBy = trade.sender.toString() === userId ? 'sender' : 'receiver';
-
+                trade.lastOfferBy = 'receiver';
                 await trade.save();
                 return res.json({ message: "Gegenangebot gemacht." });
-
+            }
+            // Logik für Sender, um ein Gegenangebot zu machen
+            else if (isSender && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
+                trade.senderHasMadeCounterOffer = true;
+                trade.counterOffer = counterOffer;
+                trade.offerHistory.push(counterOffer);
+                trade.currentOffer = counterOffer;
+                trade.lastOfferBy = 'sender';
+                await trade.save();
+                return res.json({ message: "Gegenangebot gemacht." });
             } else {
                 return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
             }
@@ -242,9 +261,25 @@ app.post("/trade/confirm", async (req, res) => {
             // Überprüfe, ob der Nutzer berechtigt ist, den Handel zu akzeptieren
             if ((trade.receiver.toString() === userId && trade.lastOfferBy === 'sender') || 
                 (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver')) {
-                trade.status = 'accepted';
+
+                // trade.status = 'accepted';
+
                 trade.acceptedPrice = trade.currentOffer;
+
+                if (trade.sender.toString() === userId) {
+                     // Setze senderConfirmed auf true (zwar bereits im Request)
+                    trade.senderConfirmed = true;
+                } else if (trade.receiver.toString() === userId) {
+                     // Setze receiverConfirmed auf true, wenn der Empfänger akzeptiert
+                    trade.receiverConfirmed = true;
+                }
+                // Wenn beide Parteien bestätigt haben, aktualisiere den Status auf 'accepted'
+                if (trade.senderConfirmed && trade.receiverConfirmed) {
+                    trade.status = 'accepted';
+                }
+
                 await trade.save();
+
                 return res.json({ message: "Handel akzeptiert." });
             } else {
                 return res.status(400).json({ message: "Nicht berechtigt, den Handel zu akzeptieren." });
@@ -308,18 +343,27 @@ app.post("/trade/counteroffer", async (req, res) => {
             return res.status(400).json({ message: "Gegenangebote sind nur im 'pending' Status möglich." });
         }
 
-        // Überprüfen, ob Nutzer berechtigt ist, ein Gegenangebot zu machen
-        if ((trade.receiver.toString() === userId && trade.lastOfferBy === 'sender') || 
-            (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver')) {
+        // Überprüfe, ob der Empfänger ein Gegenangebot machen möchte
+        if (trade.receiver.toString() === userId && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
+            trade.receiverHasMadeCounterOffer = true;
             trade.counterOffer = counterOffer;
-            trade.hasCounterOffer = true;
             trade.offerHistory.push(counterOffer);
             trade.currentOffer = counterOffer;
-            trade.lastOfferBy = trade.sender.toString() === userId ? 'sender' : 'receiver';
+            trade.lastOfferBy = 'receiver';
             await trade.save();
-            res.json({ message: "Gegenangebot gesendet." });
+            return res.json({ message: "Gegenangebot gesendet." });
+        }
+        // Überprüfe, ob der Sender ein Gegenangebot nach dem des Empfängers machen möchte
+        else if (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
+            trade.senderHasMadeCounterOffer = true;
+            trade.counterOffer = counterOffer;
+            trade.offerHistory.push(counterOffer);
+            trade.currentOffer = counterOffer;
+            trade.lastOfferBy = 'sender';
+            await trade.save();
+            return res.json({ message: "Gegenangebot gesendet." });
         } else {
-            res.status(400).json({ message: "Nicht berechtigt, ein Gegenangebot zu machen." });
+            return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
