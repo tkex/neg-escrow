@@ -2,6 +2,7 @@ import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import bcrypt from 'bcrypt';
+import cron from 'node-cron';
 
 
 const app = express();
@@ -281,10 +282,10 @@ app.post("/trade/confirm", async (req, res) => {
                 trade.acceptedPrice = trade.currentOffer;
 
                 if (trade.sender.toString() === userId) {
-                     // Setze senderConfirmed auf true (zwar bereits im Request)
+                    // Setze senderConfirmed auf true (zwar bereits im Request)
                     trade.senderConfirmed = true;
                 } else if (trade.receiver.toString() === userId) {
-                     // Setze receiverConfirmed auf true, wenn der Empfänger akzeptiert
+                    // Setze receiverConfirmed auf true, wenn der Empfänger akzeptiert
                     trade.receiverConfirmed = true;
                 }
                 // Wenn beide Parteien bestätigt haben, aktualisiere den Status auf 'accepted'
@@ -359,27 +360,71 @@ app.post("/trade/counteroffer", async (req, res) => {
 
         // Überprüfe, ob der Empfänger ein Gegenangebot machen möchte
         if (trade.receiver.toString() === userId && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
+
             trade.receiverHasMadeCounterOffer = true;
             trade.counterOffer = counterOffer;
             trade.offerHistory.push(counterOffer);
             trade.currentOffer = counterOffer;
+
             trade.lastOfferBy = 'receiver';
             await trade.save();
+
             return res.json({ message: "Gegenangebot gesendet." });
         }
         // Überprüfe, ob der Sender ein Gegenangebot nach dem des Empfängers machen möchte
         else if (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
             trade.senderHasMadeCounterOffer = true;
+
             trade.counterOffer = counterOffer;
             trade.offerHistory.push(counterOffer);
             trade.currentOffer = counterOffer;
             trade.lastOfferBy = 'sender';
+
             await trade.save();
+
             return res.json({ message: "Gegenangebot gesendet." });
         } else {
             return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+
+// Ein Cron-Job (jede Stunde prüfen)
+// Wenn refaktorisiert wird, dann Modelle in derselben Datei importieren dh. import { TradeModel } from './models/Trade';
+cron.schedule('0 * * * *', async () => {
+
+    console.log('Cron-Job gestartet: Überprüfe Handelsanfragen auf Timeout.');
+
+    const now = new Date();
+    // Alle Handelsanfragen, die über 48 Stunden sind
+    const twoDaysAgo = new Date(now.getTime() - (48 * 60 * 60 * 1000));
+
+    try {
+        // Finde Handelsanfragen, die älter als 48 Stunden sind und noch im Status 'pending' stehen
+        const trades = await TradeModel.find({
+            createdAt: { $lte: twoDaysAgo },
+            status: 'pending'
+        });
+
+        if (trades.length > 0) {
+
+            console.log(`Es wurden ${trades.length} Handelsanfragen gefunden, die abgebrochen werden.`);
+
+            for (const trade of trades) {
+                trade.status = 'cancelled';
+                await trade.save();
+            }
+
+            console.log('Alle betroffenen Handelsanfragen wurden erfolgreich abgebrochen.');
+        } else {
+
+            console.log('Keine Handelsanfragen zum Abbrechen gefunden.');
+        }
+    } catch (error) {
+
+        console.error('Fehler beim Ausführen des Cron-Jobs:', error);
     }
 });
