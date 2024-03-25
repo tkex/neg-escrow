@@ -55,7 +55,9 @@ app.get("/getUsers", async (req, res) => {
 // Route für Registrierung
 app.post("/register", async (req, res) => {
     try {
+
         const { email, username, password } = req.body;
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new UserModel({
@@ -65,7 +67,9 @@ app.post("/register", async (req, res) => {
         });
 
         await newUser.save();
+
         res.status(201).json({ message: "Benutzer wurde erfolgreich registriert." });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -74,20 +78,47 @@ app.post("/register", async (req, res) => {
 // Route für User-Login
 app.post("/login", async (req, res) => {
     try {
+
         const { username, password } = req.body;
+
         const user = await UserModel.findOne({ username });
 
         if (user && await bcrypt.compare(password, user.password)) {
-            // Successful Login
-            res.json({ message: "Erfolgreich angemeldet!" });
+
+            // Erfolgreiche Anmeldung
+            const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            res.json({ message: "Erfolgreich angemeldet!", token });
         } else {            
-            // Login failed
+            // Anmeldung fehlgeschlagen
             res.status(400).json({ message: "Anmeldung fehlgeschlagen!" });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
+
+// Middleware für Auth-Token
+const authenticate = (req, res, next) => {
+
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+     // Sofern kein Token vorhanden ist
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+         // Sofern Token nicht gültig ist
+        if (err) return res.sendStatus(403);
+
+        // Ansonsten Nutzer setzen
+        req.user = user;
+
+        // Überspringen
+        next();
+    });
+};
 
 
 const tradeSchema = new mongoose.Schema({
