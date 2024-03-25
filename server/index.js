@@ -225,6 +225,7 @@ app.post("/trade/confirm", async (req, res) => {
             return res.json({ message: "Handel abgelehnt." });
         }
 
+  
         // Gegenangebot machen
         if (action === 'counter' && counterOffer) {
             // Bestimme, ob der aktuelle Nutzer der Empfänger oder Sender ist
@@ -234,26 +235,39 @@ app.post("/trade/confirm", async (req, res) => {
             // Logik für Empfänger, um ein Gegenangebot zu machen
             if (isReceiver && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
                 trade.receiverHasMadeCounterOffer = true;
+
                 trade.counterOffer = counterOffer;
                 trade.offerHistory.push(counterOffer);
                 trade.currentOffer = counterOffer;
                 trade.lastOfferBy = 'receiver';
+
+                // Setze senderConfirmed auf false und receiverConfirmed auf true
+                trade.senderConfirmed = false;
+                trade.receiverConfirmed = true;
+
                 await trade.save();
                 return res.json({ message: "Gegenangebot gemacht." });
             }
             // Logik für Sender, um ein Gegenangebot zu machen
             else if (isSender && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
                 trade.senderHasMadeCounterOffer = true;
+
                 trade.counterOffer = counterOffer;
                 trade.offerHistory.push(counterOffer);
                 trade.currentOffer = counterOffer;
                 trade.lastOfferBy = 'sender';
+                
+                // Setze senderConfirmed auf true und receiverConfirmed auf false
+                trade.senderConfirmed = true;
+                trade.receiverConfirmed = false;
+
                 await trade.save();
                 return res.json({ message: "Gegenangebot gemacht." });
             } else {
                 return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
             }
         }
+
 
         // Handel annehmen
         if (action === 'accept') {
