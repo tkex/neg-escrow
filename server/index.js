@@ -3,6 +3,7 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import bcrypt from 'bcrypt';
 import cron from 'node-cron';
+import jwt from 'jsonwebtoken';
 
 
 const app = express();
@@ -207,7 +208,7 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 
 
 // Route für Handelsanfrage senden
-app.post("/trade/request", async (req, res) => {
+app.post("/trade/request", authenticate, async (req, res) => {
     try {
         const { sender, receiver, tradeType, initOffer } = req.body;
 
@@ -240,7 +241,7 @@ app.post("/trade/request", async (req, res) => {
 
 
 // Route für Handelsanfrage annehmen/ablehnen
-app.post("/trade/confirm", async (req, res) => {
+app.post("/trade/confirm", authenticate, async (req, res) => {
     try {
         // Action kann accept, reject oder counter sein
         const { tradeId, userId, action, counterOffer } = req.body;
@@ -340,7 +341,7 @@ app.post("/trade/confirm", async (req, res) => {
 });
 
 // Route für Handel abbrechen
-app.post("/trade/cancel", async (req, res) => {
+app.post("/trade/cancel", authenticate, async (req, res) => {
     try {
         const { tradeId, userId } = req.body;
 
@@ -375,7 +376,7 @@ app.post("/trade/cancel", async (req, res) => {
 });
 
 // Route für Gegenangebote
-app.post("/trade/counteroffer", async (req, res) => {
+app.post("/trade/counteroffer", authenticate, async (req, res) => {
     try {
         const { tradeId, userId, counterOffer } = req.body;
 
