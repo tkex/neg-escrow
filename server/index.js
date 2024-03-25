@@ -9,9 +9,10 @@ import jwt from 'jsonwebtoken';
 const app = express();
 dotenv.config();
 
-// Middleware to handle JSON requests
+// Middleware um JSON Anfragen zu handlen
 app.use(express.json());
 
+// .env für Port und MongoDB URL
 const PORT = process.env.PORT || 7000;
 const MONGOURL = process.env.MONGO_URL;
 
@@ -110,7 +111,7 @@ const authenticate = (req, res, next) => {
     if (token == null) return res.sendStatus(401);
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-         // Sofern Token nicht gültig ist
+        // Sofern Token nicht gültig ist
         if (err) return res.sendStatus(403);
 
         // Ansonsten Nutzer setzen
@@ -197,6 +198,7 @@ const tradeSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // *
     receiverHasMadeCounterOffer: {
         type: Boolean,
         default: false
@@ -430,7 +432,9 @@ cron.schedule('0 * * * *', async () => {
 
     console.log('Cron-Job gestartet: Überprüfe Handelsanfragen auf Timeout.');
 
+    // Jetziger Zeitpunkt
     const now = new Date();
+
     // Alle Handelsanfragen, die über 48 Stunden sind
     const twoDaysAgo = new Date(now.getTime() - (48 * 60 * 60 * 1000));
 
