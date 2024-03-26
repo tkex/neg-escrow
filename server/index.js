@@ -114,7 +114,7 @@ const authenticate = (req, res, next) => {
         // Sofern Token nicht gültig ist
         if (err) return res.sendStatus(403);
 
-        // Ansonsten Nutzer setzen
+        // Nutzer setzen 
         req.user = user;
 
         // Überspringen
