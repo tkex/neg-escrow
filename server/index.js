@@ -467,7 +467,7 @@ cron.schedule('0 * * * *', async () => {
 
 
 // Route um die letzten 10 Verhandlungen anzuzeigen (generell und nicht user-spezifisch)
-app.get("/trades/lasttrades", async (req, res) => {
+app.get("/trades/gen_lasttrades", async (req, res) => {
     try {
         const lastTrades = await TradeModel.find().sort({ createdAt: -1 }).limit(10);
 
@@ -477,6 +477,30 @@ app.get("/trades/lasttrades", async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// Route um die letzten 10 Trades des eingeloggten Users (user-spezifisch) anzuzeigen
+app.get("/trades/user_lasttrades", authenticate, async (req, res) => {
+    try {
+        // Der eingeloggte Benutzer ist in req.user verfügbar, nachdem die authenticate Middleware durchlaufen wurde
+        const userId = req.user.userId;
+
+        // Suche nach Trades, bei denen der Benutzer entweder Sender oder Empfänger ist,
+        const userTrades = await TradeModel.find({
+            $or: [
+                { sender: mongoose.Types.ObjectId(userId) },
+                { receiver: mongoose.Types.ObjectId(userId) }
+            ]
+        })
+         //Sortiere  nach dem Erstellungsdatum (neueste zuerst) und die letzten 10 Einträge
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+        res.json(userTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 // Route um die offenen Trades eines Nutzers anzuzeigen
 app.get("/trades/open/:userId", authenticate, async (req, res) => {
