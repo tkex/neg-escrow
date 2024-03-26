@@ -466,7 +466,7 @@ cron.schedule('0 * * * *', async () => {
 });
 
 
-// Route um die letzten 10 Verhandlungen anzuzeigen
+// Route um die letzten 10 Verhandlungen anzuzeigen (generell und nicht user-spezifisch)
 app.get("/trades/lasttrades", async (req, res) => {
     try {
         const lastTrades = await TradeModel.find().sort({ createdAt: -1 }).limit(10);
@@ -478,3 +478,19 @@ app.get("/trades/lasttrades", async (req, res) => {
     }
 });
 
+// Route um die offenen Trades eines Nutzers anzuzeigen
+app.get("/trades/open/:userId", authenticate, async (req, res) => {
+    try {
+
+        const { userId } = req.params;
+
+        const openTrades = await TradeModel.find({ 
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: 'pending'
+        });
+        
+        res.json(openTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
