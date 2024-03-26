@@ -488,8 +488,25 @@ app.get("/trades/open/:userId", authenticate, async (req, res) => {
             $or: [{ sender: userId }, { receiver: userId }],
             status: 'pending'
         });
-        
+
         res.json(openTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Route um die geschlossenen Trades eines Nutzers anzuzeigen
+app.get("/trades/closed/:userId", authenticate, async (req, res) => {
+    try {
+
+        const { userId } = req.params;
+
+        const closedTrades = await TradeModel.find({ 
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: { $in: ['accepted', 'rejected', 'cancelled'] }
+        });
+        
+        res.json(closedTrades);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
