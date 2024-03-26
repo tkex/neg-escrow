@@ -3,14 +3,16 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import bcrypt from 'bcrypt';
 import cron from 'node-cron';
+import jwt from 'jsonwebtoken';
 
 
 const app = express();
 dotenv.config();
 
-// Middleware to handle JSON requests
+// Middleware um JSON Anfragen zu handlen
 app.use(express.json());
 
+// .env für Port und MongoDB URL
 const PORT = process.env.PORT || 7000;
 const MONGOURL = process.env.MONGO_URL;
 
@@ -55,7 +57,9 @@ app.get("/getUsers", async (req, res) => {
 // Route für Registrierung
 app.post("/register", async (req, res) => {
     try {
+
         const { email, username, password } = req.body;
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new UserModel({
@@ -65,7 +69,9 @@ app.post("/register", async (req, res) => {
         });
 
         await newUser.save();
+
         res.status(201).json({ message: "Benutzer wurde erfolgreich registriert." });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -74,20 +80,47 @@ app.post("/register", async (req, res) => {
 // Route für User-Login
 app.post("/login", async (req, res) => {
     try {
+
         const { username, password } = req.body;
+
         const user = await UserModel.findOne({ username });
 
         if (user && await bcrypt.compare(password, user.password)) {
-            // Successful Login
-            res.json({ message: "Erfolgreich angemeldet!" });
+
+            // Erfolgreiche Anmeldung
+            const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            res.json({ message: "Erfolgreich angemeldet!", token });
         } else {            
-            // Login failed
+            // Anmeldung fehlgeschlagen
             res.status(400).json({ message: "Anmeldung fehlgeschlagen!" });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
+
+// Middleware für Auth-Token
+const authenticate = (req, res, next) => {
+
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+     // Sofern kein Token vorhanden ist
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        // Sofern Token nicht gültig ist
+        if (err) return res.sendStatus(403);
+
+        // Nutzer setzen 
+        req.user = user;
+
+        // Überspringen
+        next();
+    });
+};
 
 
 const tradeSchema = new mongoose.Schema({
@@ -165,6 +198,7 @@ const tradeSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // *
     receiverHasMadeCounterOffer: {
         type: Boolean,
         default: false
@@ -176,7 +210,7 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 
 
 // Route für Handelsanfrage senden
-app.post("/trade/request", async (req, res) => {
+app.post("/trade/request", authenticate, async (req, res) => {
     try {
         const { sender, receiver, tradeType, initOffer } = req.body;
 
@@ -209,7 +243,7 @@ app.post("/trade/request", async (req, res) => {
 
 
 // Route für Handelsanfrage annehmen/ablehnen
-app.post("/trade/confirm", async (req, res) => {
+app.post("/trade/confirm", authenticate, async (req, res) => {
     try {
         // Action kann accept, reject oder counter sein
         const { tradeId, userId, action, counterOffer } = req.body;
@@ -309,7 +343,7 @@ app.post("/trade/confirm", async (req, res) => {
 });
 
 // Route für Handel abbrechen
-app.post("/trade/cancel", async (req, res) => {
+app.post("/trade/cancel", authenticate, async (req, res) => {
     try {
         const { tradeId, userId } = req.body;
 
@@ -344,7 +378,7 @@ app.post("/trade/cancel", async (req, res) => {
 });
 
 // Route für Gegenangebote
-app.post("/trade/counteroffer", async (req, res) => {
+app.post("/trade/counteroffer", authenticate, async (req, res) => {
     try {
         const { tradeId, userId, counterOffer } = req.body;
 
@@ -398,7 +432,9 @@ cron.schedule('0 * * * *', async () => {
 
     console.log('Cron-Job gestartet: Überprüfe Handelsanfragen auf Timeout.');
 
+    // Jetziger Zeitpunkt
     const now = new Date();
+
     // Alle Handelsanfragen, die über 48 Stunden sind
     const twoDaysAgo = new Date(now.getTime() - (48 * 60 * 60 * 1000));
 
