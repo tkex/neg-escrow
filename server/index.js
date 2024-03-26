@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
-    },
+    }, 
     // Benutzername vom Nutzer
     username: {
         type: String,
@@ -464,3 +464,17 @@ cron.schedule('0 * * * *', async () => {
         console.error('Fehler beim Ausführen des Cron-Jobs:', error);
     }
 });
+
+
+// Route um die letzten 10 Verhandlungen anzuzeigen
+app.get("/trades/lasttrades", async (req, res) => {
+    try {
+        const lastTrades = await TradeModel.find().sort({ createdAt: -1 }).limit(10);
+
+        res.json(lastTrades);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
