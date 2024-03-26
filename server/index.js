@@ -484,14 +484,14 @@ app.get("/trades/user_lasttrades", authenticate, async (req, res) => {
         // Der eingeloggte Benutzer ist in req.user verfügbar, nachdem die authenticate Middleware durchlaufen wurde
         const userId = req.user.userId;
 
-        // Suche nach Trades, bei denen der Benutzer entweder Sender oder Empfänger ist,
+        // Suche nach Trades, bei denen der Benutzer entweder Sender oder Empfänger ist
         const userTrades = await TradeModel.find({
             $or: [
                 { sender: mongoose.Types.ObjectId(userId) },
                 { receiver: mongoose.Types.ObjectId(userId) }
             ]
         })
-         //Sortiere  nach dem Erstellungsdatum (neueste zuerst) und die letzten 10 Einträge
+         // Sortiere  nach dem Erstellungsdatum (neueste zuerst) und die letzten 10 Einträge
         .sort({ createdAt: -1 })
         .limit(10);
 
