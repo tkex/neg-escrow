@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
-    },
+    }, 
     // Benutzername vom Nutzer
     username: {
         type: String,
@@ -462,5 +462,52 @@ cron.schedule('0 * * * *', async () => {
     } catch (error) {
 
         console.error('Fehler beim Ausführen des Cron-Jobs:', error);
+    }
+});
+
+
+// Route um die letzten 10 Verhandlungen anzuzeigen (generell und nicht user-spezifisch)
+app.get("/trades/lasttrades", async (req, res) => {
+    try {
+        const lastTrades = await TradeModel.find().sort({ createdAt: -1 }).limit(10);
+
+        res.json(lastTrades);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Route um die offenen Trades eines Nutzers anzuzeigen
+app.get("/trades/open/:userId", authenticate, async (req, res) => {
+    try {
+
+        const { userId } = req.params;
+
+        const openTrades = await TradeModel.find({ 
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: 'pending'
+        });
+
+        res.json(openTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Route um die geschlossenen Trades eines Nutzers anzuzeigen
+app.get("/trades/closed/:userId", authenticate, async (req, res) => {
+    try {
+
+        const { userId } = req.params;
+
+        const closedTrades = await TradeModel.find({ 
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: { $in: ['accepted', 'rejected', 'cancelled'] }
+        });
+        
+        res.json(closedTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
