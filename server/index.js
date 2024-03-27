@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
 const UserModel = mongoose.model("User", userSchema);
 
 // Route für User Abfrage (get)
-app.get("/getUsers", async (req, res) => {
+app.get("/users", async (req, res) => {
     const users = await UserModel.find();
     res.json(users);
 });

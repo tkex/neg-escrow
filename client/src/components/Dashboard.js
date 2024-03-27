@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
+import CreateNewTradeButton from './CreateNewTradeButton';
 
 
 const Dashboard = () => {
-  const [generalTrades, setGeneralTrades] = useState([]);
   const { user, logout } = useAuth();
+
+  { /* Generelle letzten Verhandlungen (10)*/}
+  const [generalTrades, setGeneralTrades] = useState([]);
+
+  { /* Neue Verhandlung Modal*/}
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+
+  const openTradeModal = () => setIsTradeModalOpen(true);
+  const closeTradeModal = () => setIsTradeModalOpen(false);
+  const handleTradeSuccess = () => {
+    closeTradeModal();
+    // Zusätzliche Aktionen nach dem Erfolg durchführen wie z.B. das Aktualisieren der Trade-Liste
+    alert('Verhandlung erfolgreich gestartet');
+  };
 
   useEffect(() => {
     fetch('http://localhost:8000/trades/gen_lasttrades', {
@@ -27,8 +41,17 @@ const Dashboard = () => {
       <p>Benutzer-ID: {user ? user.id : 'Unbekannt'}</p>
       <button onClick={logout}>Logout</button>
 
-      <button onClick={logout}>Neue Verhandlung starten</button>
+      { /* Neue Verhandlung Button */}
+      <div>
+      <button onClick={openTradeModal}>Neue Verhandlung starten</button>
+      <CreateNewTradeButton 
+        isOpen={isTradeModalOpen} 
+        onClose={closeTradeModal} 
+        onSuccess={handleTradeSuccess} 
+      />
+      </div>
 
+      { /* Generelle letzten Verhandlungen (10)*/}
       <table>
         <thead>
           <tr>
