@@ -4,6 +4,21 @@ import { useAuth } from '../contexts/AuthContext';
 import CreateNewTradeButton from './CreateNewTradeButton';
 
 
+
+{ /* Helper-Funktionen um InitAngebot und OfferHistory zu konvertieren */}
+const formatCurrency = (value) => {
+  // Wert als Float behandelt wird
+  const number = typeof value === 'number' ? value : parseFloat(value);
+   // Konvertiert den Wert in einen String mit zwei Dezimalstellen und fügt € hinzu
+  return `${number.toFixed(2)}€`;
+};
+
+const formatOfferHistory = (offerHistory) => {
+  return offerHistory.map(offer => formatCurrency(offer)).join(' → ');
+};
+
+
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
 
@@ -52,6 +67,8 @@ const Dashboard = () => {
       </div>
 
       { /* Generelle letzten Verhandlungen (10)*/}
+
+
       <table>
         <thead>
           <tr>
@@ -65,18 +82,18 @@ const Dashboard = () => {
           </tr>
         </thead>
         <tbody>
-          {generalTrades.map(trade => (
-            <tr key={trade._id}>
-              <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
-              <td>{trade.initOffer}</td>
-              <td>{trade.acceptedPrice}</td>
-              <td>{trade.offerHistory.join(' - ')}</td>
-              <td>{trade.sender}</td>
-              <td>{trade.receiver}</td>
-              <td>{trade.status}</td>
-            </tr>
-          ))}
-        </tbody>
+        {generalTrades.map(trade => (
+          <tr key={trade._id}>
+            <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
+            <td>{formatCurrency(trade.initOffer)}</td>
+            <td>{trade.acceptedPrice ? formatCurrency(trade.acceptedPrice) : 'N/A'}</td>
+            <td>{formatOfferHistory(trade.offerHistory)}</td>
+            <td>{trade.sender}</td>
+            <td>{trade.receiver}</td>
+            <td>{trade.status}</td>
+          </tr>
+        ))}
+      </tbody>
       </table>
     </div>
   );
