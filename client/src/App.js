@@ -1,9 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Login from "./components/Login"; // Pfad entsprechend anpassen
-//import Dashboard from "./components/Dashboard"; // Pfad entsprechend anpassen. Dashboard ist Ihre geschützte Route
-import PrivateRoute from "./components/PrivateRoute.js"; // Pfad entsprechend anpassen
-import AuthProvider from "./contexts/AuthContext"; // Pfad entsprechend anpassen
+import Login from "./components/Login";
+import Register from "./components/Register";
+//import Dashboard from "./components/Dashboard";
+import PrivateRoute from "./components/PrivateRoute.js";
+import AuthProvider from "./contexts/AuthContext";
 
 const App = () => {
   return (
@@ -11,6 +12,7 @@ const App = () => {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<PrivateRoute />}>
             
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}

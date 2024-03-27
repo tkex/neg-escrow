@@ -32,6 +32,29 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (username, email, password) => {
+    try {
+      const response = await fetch("http://localhost:8000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        
+        // Optional: Automatisches Einloggen des Benutzers nach Registrierung
+        // login(username, password);
+        alert("Registrierung erfolgreich. Bitte loggen Sie sich ein.");
+
+        navigate("/login");
+      } else {
+        throw new Error(data.message || "Registrierung fehlgeschlagen");
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
@@ -39,7 +62,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
