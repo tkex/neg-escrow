@@ -67,8 +67,6 @@ const Dashboard = () => {
       </div>
 
       { /* Generelle letzten Verhandlungen (10)*/}
-
-
       <table>
         <thead>
           <tr>

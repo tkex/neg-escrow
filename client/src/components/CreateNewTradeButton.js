@@ -1,10 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const CreateNewTradeButton = ({ onClose, onSuccess }) => {
   const [receiverId, setReceiverId] = useState('');
-  const [initOffer, setInitOffer] = useState('');
+  const [initOffer, setInitOffer] = useState('0');
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuth();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('http://localhost:8000/users', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          throw new Error('Benutzerdaten konnten nicht geladen werden');
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchUsers();
+    }
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,14 +70,16 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
     <div className="modal">
       <form onSubmit={handleSubmit}>
         <div>
-          <label>
-            Empfänger-ID:
-            <input
-              type="text"
-              value={receiverId}
-              onChange={(e) => setReceiverId(e.target.value)}
-              required
-            />
+        <label>
+            Empfänger:
+            <select value={receiverId} onChange={(e) => setReceiverId(e.target.value)} required>
+            <option value="">Bitte wählen...</option>
+            {users.map(user => (
+              <option key={user._id} value={user._id}>
+                {user.username}
+              </option>
+            ))}
+          </select>
           </label>
         </div>
         <div>
