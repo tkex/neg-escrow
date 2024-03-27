@@ -540,3 +540,18 @@ app.get("/trades/closed/:userId", authenticate, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+app.get("/verifyToken", authenticate, (req, res) => {
+    
+    // Nach erfolgreicher Authentifizierung durch Middleware
+    UserModel.findById(req.user.userId)
+
+      .then(user => {        
+        if (!user) {
+          return res.status(404).json({ message: "Benutzer nicht gefunden." });
+        }
+        // Benutzerdaten zurückgeben
+        res.json({ username: user.username, userId: user._id });
+      })
+      .catch(error => res.status(500).json({ message: error.message }));
+  });

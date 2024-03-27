@@ -1,6 +1,6 @@
-// Register.js
+
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext"; // Passen Sie den Pfad entsprechend an
+import { useAuth } from "../contexts/AuthContext";
 
 const Register = () => {
   const [formData, setFormData] = useState({
