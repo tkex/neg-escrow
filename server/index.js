@@ -4,13 +4,18 @@ import dotenv from "dotenv"
 import bcrypt from 'bcrypt';
 import cron from 'node-cron';
 import jwt from 'jsonwebtoken';
+import cors from 'cors';
 
 
 const app = express();
 dotenv.config();
 
+// Aktiviere CORS für alle Anfragen
+app.use(cors());
+
 // Middleware um JSON Anfragen zu handlen
 app.use(express.json());
+
 
 // .env für Port und MongoDB URL
 const PORT = process.env.PORT || 7000;

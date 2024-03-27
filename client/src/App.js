@@ -1,25 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Login from "./components/Login"; // Pfad entsprechend anpassen
+//import Dashboard from "./components/Dashboard"; // Pfad entsprechend anpassen. Dashboard ist Ihre geschützte Route
+import PrivateRoute from "./components/PrivateRoute.js"; // Pfad entsprechend anpassen
+import AuthProvider from "./contexts/AuthContext"; // Pfad entsprechend anpassen
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<PrivateRoute />}>
+            
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          </Route>
+          {/* Hier dann weitere geschützte Routen */}
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
-}
+};
 
 export default App;
