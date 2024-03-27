@@ -11,7 +11,13 @@ const app = express();
 dotenv.config();
 
 // Aktiviere CORS für alle Anfragen
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
+  
 
 // Middleware um JSON Anfragen zu handlen
 app.use(express.json());
@@ -107,23 +113,20 @@ app.post("/login", async (req, res) => {
 
 
 // Middleware für Auth-Token
-const authenticate = (req, res, next) => {
 
+const authenticate = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-     // Sofern kein Token vorhanden ist
-    if (token == null) return res.sendStatus(401);
+    if (token == null) return res.sendStatus(401); // No token was found
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        // Sofern Token nicht gültig ist
-        if (err) return res.sendStatus(403);
+        if (err) return res.sendStatus(403); // Token verification failed
 
-        // Nutzer setzen 
-        req.user = user;
+        req.user = user; // Assuming 'user' object contains 'userId'
+        console.log("Authenticated user:", req.user);
 
-        // Überspringen
-        next();
+        next(); // Proceed to the next middleware/route handler
     });
 };
 
@@ -217,25 +220,26 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 // Route für Handelsanfrage senden
 app.post("/trade/request", authenticate, async (req, res) => {
     try {
-        const { sender, receiver, tradeType, initOffer } = req.body;
+        const receiver = req.body.receiver;
+        const tradeType = req.body.tradeType;
+        const initOffer = req.body.initOffer;
+        const sender = req.user.userId; // Assuming req.user is set by the authenticate middleware and contains userId
 
-        // Prüfe ob tradeType richtig ist
         if (tradeType !== 'Angebot') {
             return res.status(400).json({ message: "Ungültiger Handelstyp." });
         }
 
-        // Erstelle neue Verhandelsanfrage
         const newTrade = new TradeModel({
             sender,
             receiver,
             tradeType,
             initOffer,
-            currentOffer: initOffer, // Setze initOffer als currentOffer
-            lastOfferBy: 'sender', // Sender hat das erste Angebot gemacht
-            senderConfirmed: true, // Setze senderConfirmed auf true
-            offerHistory: [initOffer] // Füge initOffer zur offerHistory hinzu
+            currentOffer: initOffer,
+            lastOfferBy: 'sender',
+            senderConfirmed: true,
+            offerHistory: [initOffer]
         });
-        
+
 
         // Sender hat das erste Angebot gemacht
         await newTrade.save();
