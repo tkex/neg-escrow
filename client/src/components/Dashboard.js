@@ -1,52 +1,60 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
+
+
 const Dashboard = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [generalTrades, setGeneralTrades] = useState([]);
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
+    fetch('http://localhost:8000/trades/gen_lasttrades', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      setGeneralTrades(data);
+    })
+    .catch(error => console.error('Fehler generelle Verhandlungen zu holen:', error));
   }, []);
-
-  // TODO: Mit Backend Fetch austauschen
-  const letzteTrades = [
-    { trade: "Trade 1", status: "Erfolgreich" },
-    { trade: "Trade 2", status: "Fehlgeschlagen" },
-  ];
 
   return (
     <div>
       <h1>Dashboard</h1>
       <p>Benutzername: {user ? user.username : 'Unbekannt'}</p>
       <p>Benutzer-ID: {user ? user.id : 'Unbekannt'}</p>
-
-      <p>Heute ist der {currentTime.toLocaleDateString()}</p>
-      <p>Aktuelle Uhrzeit: {currentTime.toLocaleTimeString()}</p>
-
       <button onClick={logout}>Logout</button>
 
-      <div>
-        <button>Neue Verhandlung starten</button>
-      </div>
+      <button onClick={logout}>Neue Verhandlung starten</button>
 
-      <div>    
-        <h2>Letzte Trades</h2>
-        <ul>
-          {letzteTrades.map((trade, index) => (
-            <li key={index}>{trade.trade} - {trade.status}</li>
+      <table>
+        <thead>
+          <tr>
+            <th>Zeitpunkt</th>
+            <th>Initiales Angebot</th>
+            <th>Geeinigter Preis</th>
+            <th>Gegenangebot-Historie</th>
+            <th>Käufer (ID)</th>
+            <th>Verkäufer (ID)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {generalTrades.map(trade => (
+            <tr key={trade._id}>
+              <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
+              <td>{trade.initOffer}</td>
+              <td>{trade.acceptedPrice}</td>
+              <td>{trade.offerHistory.join(' - ')}</td>
+              <td>{trade.sender}</td>
+              <td>{trade.receiver}</td>
+              <td>{trade.status}</td>
+            </tr>
           ))}
-        </ul>
-      </div>
-
-      <div>
-        <h2>Zuletzt durchgeführten Verhandlungen</h2>
-        {/* Platzhalter für die Verhandlungen, ähnlich wie bei den Trades */}
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 };
