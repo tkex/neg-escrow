@@ -150,6 +150,18 @@ const tradeSchema = new mongoose.Schema({
         enum: ['Angebot'],
         required: true
     },
+    // Betreff der Anfrage
+    subject: {
+        type: String,
+        required: true,
+        maxlength: 100
+    },
+    // Beschreibung der Anfrage
+    description: {
+        type: String,
+        required: true,
+        maxlength: 100
+    },
     // Mögliche Stati einer Verhandlung, standardgemäß "pending"
     status: {
         type: String,
@@ -220,10 +232,14 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 // Route für Handelsanfrage senden
 app.post("/trade/request", authenticate, async (req, res) => {
     try {
-        const receiver = req.body.receiver;
-        const tradeType = req.body.tradeType;
-        const initOffer = req.body.initOffer;
-        const sender = req.user.userId; // Assuming req.user is set by the authenticate middleware and contains userId
+        //const receiver = req.body.receiver;
+        //const tradeType = req.body.tradeType;
+        //const initOffer = req.body.initOffer;
+        
+        const { receiver, tradeType, initOffer, subject, description } = req.body;
+
+         // req.user ist gesetzt von der Authenticate Middleware und beinhaltet userId
+        const sender = req.user.userId;
 
         if (tradeType !== 'Angebot') {
             return res.status(400).json({ message: "Ungültiger Handelstyp." });
@@ -234,6 +250,8 @@ app.post("/trade/request", authenticate, async (req, res) => {
             receiver,
             tradeType,
             initOffer,
+            subject,
+            description,
             currentOffer: initOffer,
             lastOfferBy: 'sender',
             senderConfirmed: true,
@@ -559,3 +577,42 @@ app.get("/verifyToken", authenticate, (req, res) => {
       })
       .catch(error => res.status(500).json({ message: error.message }));
   });
+
+// Anzahl der offenen Verhandlungen eines Benutzers
+app.get("/trades/count/open", authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const count = await TradeModel.countDocuments({
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: 'pending'
+        });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Anzahl der geschlossener Verhandlungen eines Benutzers
+app.get("/trades/count/closed", authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const count = await TradeModel.countDocuments({
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: { $in: ['accepted', 'rejected', 'cancelled'] }
+        });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Anzahl aller Verhandlungen im System
+app.get("/trades/count/total", async (req, res) => {
+    try {
+        const count = await TradeModel.countDocuments();
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});

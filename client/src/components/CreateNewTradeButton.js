@@ -8,6 +8,10 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuth();
 
+  // Zustände für Betreff und Beschreibung
+  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
+
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
@@ -50,6 +54,8 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
           receiver: receiverId,
           tradeType: 'Angebot',
           initOffer: parseFloat(initOffer),
+          subject, // Betreff
+          description, // Beschreibung
         }),
       });
 
@@ -69,6 +75,7 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
   return (
     <div className="modal">
       <form onSubmit={handleSubmit}>
+        
         <div>
         <label>
             Empfänger:
@@ -82,6 +89,28 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
           </select>
           </label>
         </div>
+        <div>
+  <label>
+    Betreff:
+    <input
+      type="text"
+      value={subject}
+      onChange={(e) => setSubject(e.target.value)}
+      required
+    />
+  </label>
+</div>
+<div>
+  <label>
+    Beschreibung (max. 100 Zeichen):
+    <textarea
+      value={description}
+      onChange={(e) => setDescription(e.target.value)}
+      maxLength="100"
+      required
+    />
+  </label>
+</div>
         <div>
           <label>
             Initialangebot:
