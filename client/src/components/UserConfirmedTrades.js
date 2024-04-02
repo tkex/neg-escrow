@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import translateStatus from './utils/statusTranslations';
+import translateStatus from './utils/statusTranslation';
 
 const UserAcceptedTrades = ({ token }) => {
   const [acceptedTrades, setAcceptedTrades] = useState([]);
