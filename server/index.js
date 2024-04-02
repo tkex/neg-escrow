@@ -130,6 +130,21 @@ const authenticate = (req, res, next) => {
     });
 };
 
+app.get("/verifyToken", authenticate, (req, res) => {
+    
+    // Nach erfolgreicher Authentifizierung durch Middleware
+    UserModel.findById(req.user.userId)
+
+      .then(user => {        
+        if (!user) {
+          return res.status(404).json({ message: "Benutzer nicht gefunden." });
+        }
+        // Benutzerdaten zurückgeben
+        res.json({ username: user.username, userId: user._id });
+      })
+      .catch(error => res.status(500).json({ message: error.message }));
+  });
+
 
 const tradeSchema = new mongoose.Schema({
     // Sender
@@ -169,12 +184,12 @@ const tradeSchema = new mongoose.Schema({
         default: 'pending'
     },
     // Verhandlungstatus vom Sender, standardgemäß: false
-    senderConfirmed: {
+    senderAccepted: {
         type: Boolean,
         default: false
     },
     // Verhandlungstatus vom Empfänger, standardgemäß: false
-    receiverConfirmed: {
+    receiverAccepted: {
         type: Boolean,
         default: false
     },
@@ -232,14 +247,15 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 // Route für Handelsanfrage senden
 app.post("/trade/request", authenticate, async (req, res) => {
     try {
-        //const receiver = req.body.receiver;
-        //const tradeType = req.body.tradeType;
-        //const initOffer = req.body.initOffer;
-        
         const { receiver, tradeType, initOffer, subject, description } = req.body;
 
-         // req.user ist gesetzt von der Authenticate Middleware und beinhaltet userId
+        // req.user ist gesetzt von der Authenticate Middleware und beinhaltet userId
         const sender = req.user.userId;
+
+        // Überprüfen, ob Sender und Empfänger die gleiche Person sind
+        if (sender === receiver) {
+            return res.status(400).json({ message: "Handelsanfragen an sich selbst sind nicht erlaubt." });
+        }
 
         if (tradeType !== 'Angebot') {
             return res.status(400).json({ message: "Ungültiger Handelstyp." });
@@ -254,10 +270,9 @@ app.post("/trade/request", authenticate, async (req, res) => {
             description,
             currentOffer: initOffer,
             lastOfferBy: 'sender',
-            senderConfirmed: true,
+            senderAccepted: true,
             offerHistory: [initOffer]
         });
-
 
         // Sender hat das erste Angebot gemacht
         await newTrade.save();
@@ -269,188 +284,120 @@ app.post("/trade/request", authenticate, async (req, res) => {
 });
 
 
-// Route für Handelsanfrage annehmen/ablehnen
-app.post("/trade/confirm", authenticate, async (req, res) => {
-    try {
-        // Action kann accept, reject oder counter sein
-        const { tradeId, userId, action, counterOffer } = req.body;
 
+// Route für Handelsanfrage akzeptieren
+    app.post("/trade/accept", authenticate, async (req, res) => {
+        const { tradeId } = req.body;
+        const userId = req.user.userId;
+    
+        try {
+            const trade = await TradeModel.findById(tradeId);
+            if (!trade) {
+                return res.status(404).json({ message: "Handel nicht gefunden." });
+            }
+    
+            // Wenn der Empfänger das Angebot akzeptiert
+            if (trade.receiver.toString() === userId) {
+                trade.receiverAccepted = true;
+            }
+            // Wenn der Sender ein Gegenangebot des Empfängers akzeptiert
+            else if (trade.sender.toString() === userId && trade.receiverHasMadeCounterOffer) {
+                trade.senderAccepted = true;
+            }
+            else {
+                return res.status(403).json({ message: "Nicht berechtigt." });
+            }
+    
+            // Wenn beide Parteien akzeptiert haben
+            if (trade.senderAccepted && trade.receiverAccepted) {
+                trade.status = 'confirmed';
+            }
+    
+            await trade.save();
+            res.json({ message: "Handel erfolgreich akzeptiert." });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    });
+    
+
+
+// Route für Handelsanfrage ablehnen
+app.post("/trade/reject", authenticate, async (req, res) => {
+    const { tradeId } = req.body;
+    const userId = req.user.userId;
+
+    try {
         const trade = await TradeModel.findById(tradeId);
         if (!trade) {
             return res.status(404).json({ message: "Handel nicht gefunden." });
         }
 
-        // Handel ablehnen
-        if (action === 'reject') {
+        // Sowohl Sender als auch Empfänger können den Handel ablehnen
+        if (trade.sender.toString() === userId || trade.receiver.toString() === userId) {
             trade.status = 'rejected';
             await trade.save();
-            return res.json({ message: "Handel abgelehnt." });
+            res.json({ message: "Handel erfolgreich abgelehnt." });
+        } else {
+            return res.status(403).json({ message: "Nicht berechtigt." });
         }
-
-  
-        // Gegenangebot machen
-        if (action === 'counter' && counterOffer) {
-            // Bestimme, ob der aktuelle Nutzer der Empfänger oder Sender ist
-            let isReceiver = trade.receiver.toString() === userId;
-            let isSender = trade.sender.toString() === userId;
-
-            // Logik für Empfänger, um ein Gegenangebot zu machen
-            if (isReceiver && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
-                trade.receiverHasMadeCounterOffer = true;
-
-                trade.counterOffer = counterOffer;
-                trade.offerHistory.push(counterOffer);
-                trade.currentOffer = counterOffer;
-                trade.lastOfferBy = 'receiver';
-
-                // Setze senderConfirmed auf false und receiverConfirmed auf true
-                trade.senderConfirmed = false;
-                trade.receiverConfirmed = true;
-
-                await trade.save();
-                return res.json({ message: "Gegenangebot gemacht." });
-            }
-            // Logik für Sender, um ein Gegenangebot zu machen
-            else if (isSender && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
-                trade.senderHasMadeCounterOffer = true;
-
-                trade.counterOffer = counterOffer;
-                trade.offerHistory.push(counterOffer);
-                trade.currentOffer = counterOffer;
-                trade.lastOfferBy = 'sender';
-                
-                // Setze senderConfirmed auf true und receiverConfirmed auf false
-                trade.senderConfirmed = true;
-                trade.receiverConfirmed = false;
-
-                await trade.save();
-                return res.json({ message: "Gegenangebot gemacht." });
-            } else {
-                return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
-            }
-        }
-
-
-        // Handel annehmen
-        if (action === 'accept') {
-
-            // Überprüfe, ob der Nutzer berechtigt ist, den Handel zu akzeptieren
-            if ((trade.receiver.toString() === userId && trade.lastOfferBy === 'sender') || 
-                (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver')) {
-
-                // trade.status = 'accepted';
-
-                trade.acceptedPrice = trade.currentOffer;
-
-                if (trade.sender.toString() === userId) {
-                    // Setze senderConfirmed auf true (zwar bereits im Request)
-                    trade.senderConfirmed = true;
-                } else if (trade.receiver.toString() === userId) {
-                    // Setze receiverConfirmed auf true, wenn der Empfänger akzeptiert
-                    trade.receiverConfirmed = true;
-                }
-                // Wenn beide Parteien bestätigt haben, aktualisiere den Status auf 'accepted'
-                if (trade.senderConfirmed && trade.receiverConfirmed) {
-                    trade.status = 'accepted';
-                }
-
-                await trade.save();
-
-                return res.json({ message: "Handel akzeptiert." });
-            } else {
-                return res.status(400).json({ message: "Nicht berechtigt, den Handel zu akzeptieren." });
-            }
-        }
-
-        res.status(400).json({ message: "Ungültige Aktion." });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Route für Handel abbrechen
-app.post("/trade/cancel", authenticate, async (req, res) => {
-    try {
-        const { tradeId, userId } = req.body;
-
-        // Finde den Handel in der Datenbank mit der tradeId
-        const trade = await TradeModel.findById(tradeId);
-
-        // Prüfe, ob der Handel existiert und ob der Nutzer berechtigt ist, ihn zu stornieren
-        if (!trade) {
-            return res.status(404).json({ message: "Handel nicht gefunden." });
-        }
-
-        // Prüfe, ob der Benutzer entweder der Sender oder der Empfänger des Handels ist
-        if (trade.sender.toString() !== userId && trade.receiver.toString() !== userId) {
-            return res.status(403).json({ message: "Keine Berechtigung, diesen Handel abzubrechen." });
-        }
-
-        // Handel kann nicht abgebrochen werden, wenn er bereits akzeptiert wurde
-        if (trade.status === 'accepted') {
-            return res.status(400).json({ message: "Handel wurde bereits akzeptiert und kann nicht abgebrochen werden." });
-        }
-
-        // Setze den Handelsstatus auf 'cancelled'
-        trade.status = 'cancelled';
-        await trade.save();
-
-        // Antworte positiv
-        res.json({ message: "Handel erfolgreich abgebrochen." });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
 // Route für Gegenangebote
+
 app.post("/trade/counteroffer", authenticate, async (req, res) => {
+    const { tradeId, counterOffer } = req.body;
+    const userId = req.user.userId;
+
     try {
-        const { tradeId, userId, counterOffer } = req.body;
-
         const trade = await TradeModel.findById(tradeId);
-
         if (!trade) {
             return res.status(404).json({ message: "Handel nicht gefunden." });
         }
 
-        if (trade.status !== 'pending') {
-            return res.status(400).json({ message: "Gegenangebote sind nur im 'pending' Status möglich." });
+        if (trade.status !== 'pending' && trade.status !== 'confirmed') {
+            return res.status(400).json({ message: "Gegenangebote sind nur für offene Handelsanfragen möglich." });
         }
 
-        // Überprüfe, ob der Empfänger ein Gegenangebot machen möchte
-        if (trade.receiver.toString() === userId && trade.lastOfferBy === 'sender' && !trade.receiverHasMadeCounterOffer) {
-
+        // Empfänger macht ein Gegenangebot, überprüft, ob bereits ein Gegenangebot gemacht wurde
+        if (trade.receiver.toString() === userId) {
+            if (trade.receiverHasMadeCounterOffer) {
+                // Fehlermeldung, wenn bereits ein Gegenangebot vom Empfänger gemacht wurde
+                return res.status(400).json({ message: "Sie haben bereits ein Gegenangebot gemacht." });
+            }
             trade.receiverHasMadeCounterOffer = true;
-            trade.counterOffer = counterOffer;
-            trade.offerHistory.push(counterOffer);
-            trade.currentOffer = counterOffer;
-
-            trade.lastOfferBy = 'receiver';
-            await trade.save();
-
-            return res.json({ message: "Gegenangebot gesendet." });
-        }
-        // Überprüfe, ob der Sender ein Gegenangebot nach dem des Empfängers machen möchte
-        else if (trade.sender.toString() === userId && trade.lastOfferBy === 'receiver' && !trade.senderHasMadeCounterOffer) {
+            trade.senderAccepted = false;
+            trade.receiverAccepted = true;
+        } 
+        // Sender macht ein Gegenangebot nach einem Gegenangebot des Empfängers, überprüft, ob bereits ein Gegenangebot gemacht wurde
+        else if (trade.sender.toString() === userId) {
+            if (trade.senderHasMadeCounterOffer || !trade.receiverHasMadeCounterOffer) {
+                // Fehlermeldung, wenn der Sender bereits ein Gegenangebot gemacht hat oder der Empfänger noch kein Gegenangebot gemacht hat
+                return res.status(400).json({ message: "Ein weiteres Gegenangebot kann nicht gemacht werden." });
+            }
             trade.senderHasMadeCounterOffer = true;
-
-            trade.counterOffer = counterOffer;
-            trade.offerHistory.push(counterOffer);
-            trade.currentOffer = counterOffer;
-            trade.lastOfferBy = 'sender';
-
-            await trade.save();
-
-            return res.json({ message: "Gegenangebot gesendet." });
-        } else {
-            return res.status(400).json({ message: "Ein Gegenangebot kann unter diesen Umständen nicht gemacht werden." });
+            trade.receiverAccepted = false;
+            trade.senderAccepted = true;
         }
+        else {
+            return res.status(403).json({ message: "Nicht berechtigt." });
+        }
+
+        trade.counterOffer = counterOffer;
+        trade.offerHistory.push(counterOffer);
+        trade.currentOffer = counterOffer;
+        trade.lastOfferBy = (trade.receiver.toString() === userId) ? 'receiver' : 'sender';
+
+        await trade.save();
+        res.json({ message: "Gegenangebot erfolgreich gemacht." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 
 // Ein Cron-Job (jede Stunde prüfen)
@@ -493,8 +440,11 @@ cron.schedule('0 * * * *', async () => {
 });
 
 
+
+
+
 // Route um die letzten 10 Verhandlungen anzuzeigen (generell und nicht user-spezifisch)
-app.get("/trades/gen_lasttrades", async (req, res) => {
+app.get("/trades/global-lasttrades", async (req, res) => {
     try {
         const lastTrades = await TradeModel.find().sort({ createdAt: -1 }).limit(10);
 
@@ -505,8 +455,27 @@ app.get("/trades/gen_lasttrades", async (req, res) => {
     }
 });
 
+
+// Route um die offenen Verhandlungen des eingeloggten Benutzers anzuzeigen
+app.get("/user/open-trades", authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const openTrades = await TradeModel.find({
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: 'pending'
+        }).populate('sender receiver', 'username');
+
+        res.json(openTrades);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 // Route um die letzten 10 Trades des eingeloggten Users (user-spezifisch) anzuzeigen
-app.get("/trades/user_lasttrades", authenticate, async (req, res) => {
+app.get("/trades/user-lasttrades", authenticate, async (req, res) => {
     try {
         // Der eingeloggte Benutzer ist in req.user verfügbar, nachdem die authenticate Middleware durchlaufen wurde
         const userId = req.user.userId;
@@ -529,54 +498,55 @@ app.get("/trades/user_lasttrades", authenticate, async (req, res) => {
 });
 
 
-// Route um die offenen Trades eines Nutzers anzuzeigen
-app.get("/trades/open/:userId", authenticate, async (req, res) => {
+// Route für durchgeführte Trades des eingeloggten Benutzers
+app.get("/trades/confirmed", authenticate, async (req, res) => {
     try {
+        const userId = req.user.userId;
 
-        const { userId } = req.params;
-
-        const openTrades = await TradeModel.find({ 
+        const acceptedTrades = await TradeModel.find({
             $or: [{ sender: userId }, { receiver: userId }],
-            status: 'pending'
-        });
+            status: 'confirmed'
+        }).populate('sender receiver', 'username');
 
-        res.json(openTrades);
+        res.json(acceptedTrades);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// Route um die geschlossenen Trades eines Nutzers anzuzeigen
-app.get("/trades/closed/:userId", authenticate, async (req, res) => {
+
+
+// Route für geschlossene Trades des eingeloggten Benutzers
+app.get("/trades/denied", authenticate, async (req, res) => {
     try {
+        const userId = req.user.userId;
 
-        const { userId } = req.params;
-
-        const closedTrades = await TradeModel.find({ 
+        const closedTrades = await TradeModel.find({
             $or: [{ sender: userId }, { receiver: userId }],
-            status: { $in: ['accepted', 'rejected', 'cancelled'] }
-        });
-        
+            status: { $in: ['rejected', 'cancelled'] }
+        }).populate('sender receiver', 'username');
+
         res.json(closedTrades);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-app.get("/verifyToken", authenticate, (req, res) => {
-    
-    // Nach erfolgreicher Authentifizierung durch Middleware
-    UserModel.findById(req.user.userId)
+// Route für abgeschlossene Trades des eingeloggten Benutzers
+app.get("/trades/closed", authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
 
-      .then(user => {        
-        if (!user) {
-          return res.status(404).json({ message: "Benutzer nicht gefunden." });
-        }
-        // Benutzerdaten zurückgeben
-        res.json({ username: user.username, userId: user._id });
-      })
-      .catch(error => res.status(500).json({ message: error.message }));
-  });
+        const closedTrades = await TradeModel.find({
+            $or: [{ sender: userId }, { receiver: userId }],
+            status: { $in: ['confirmed','rejected', 'cancelled'] }
+        }).populate('sender receiver', 'username');
+
+        res.json(closedTrades);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 // Anzahl der offenen Verhandlungen eines Benutzers
 app.get("/trades/count/open", authenticate, async (req, res) => {
