@@ -1,4 +1,6 @@
 const translateStatus = (status) => {
+  
+    // Siehe Schema-Definition im Backend
     const statusTranslations = {
       'pending': 'Ausstehend',
       'confirmed': 'Bestätigt',
@@ -6,6 +8,7 @@ const translateStatus = (status) => {
       'cancelled': 'Abgebrochen',
       'accepted': 'Akzeptiert'
     };
+
     return statusTranslations[status] || status;
   };
   
