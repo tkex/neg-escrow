@@ -311,6 +311,9 @@ app.post("/trade/request", authenticate, async (req, res) => {
             // Wenn beide Parteien akzeptiert haben
             if (trade.senderAccepted && trade.receiverAccepted) {
                 trade.status = 'confirmed';
+                // Setze acceptedPrice auf den letzten Preis aus offerHistory oder currentOffer, falls offerHistory leer ist
+                // Alternativ auch aus currentOffer
+                trade.acceptedPrice = trade.offerHistory.length > 0 ? trade.offerHistory[trade.offerHistory.length - 1] : trade.currentOffer;
             }
     
             await trade.save();

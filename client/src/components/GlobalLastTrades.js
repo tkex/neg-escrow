@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import translateStatus from './utils/statusTranslations';
 
 const GeneralLastTrades = ({ token }) => {
   const [generalTrades, setGeneralTrades] = useState([]);
@@ -41,7 +42,7 @@ const GeneralLastTrades = ({ token }) => {
               <td>{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
               <td>{trade.sender}</td>
               <td>{trade.receiver}</td>
-              <td>{trade.status}</td>
+              <td>{translateStatus(trade.status)}</td>
               <td>
                 {/* Implementiere Modal */}
                 <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)}>Details anzeigen</button>

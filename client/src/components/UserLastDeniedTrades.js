@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import translateStatus from './utils/statusTranslations';
+
 
 const UserLastClosedTrades = ({ token }) => {
   const [closedTrades, setClosedTrades] = useState([]);
 
   useEffect(() => {
-    // Verwende die spezielle Route für geschlossene Trades
     fetch('http://localhost:8000/trades/denied', {
       method: 'GET',
       headers: { 
@@ -19,6 +20,7 @@ const UserLastClosedTrades = ({ token }) => {
       return response.json();
     })
     .then(data => {
+      // Kein Filter notwendig, da Backend direkt akzeptierte Trades liefert
       setClosedTrades(data);
     })
     .catch(error => console.error('Fehler beim Abrufen der geschlossenen Trades:', error));
@@ -53,7 +55,7 @@ const UserLastClosedTrades = ({ token }) => {
               <td>{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
               <td>{trade.sender.username}</td>
               <td>{trade.receiver.username}</td>
-              <td>{trade.status}</td>
+              <td>{translateStatus(trade.status)}</td>
               <td>
                 <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)}>Details anzeigen</button>
               </td>

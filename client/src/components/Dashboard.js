@@ -35,8 +35,8 @@ const Dashboard = () => {
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Benutzername: {user ? user.username : 'Unbekannt'}</p>
-      <p>Benutzer-ID: {user ? user.id : 'Unbekannt'}</p>
+      <p>Benutzername: {user ? user.username : 'Unbekannter Nutzer'}</p>
+      <p>Benutzer-ID: {user ? user.id : 'Unbekannte ID'}</p>
       <div>
         <p>Anzahl offener Verhandlungen: {openTradesCount}</p>
         <p>Anzahl geschlossener Verhandlungen: {closedTradesCount}</p>
@@ -51,7 +51,6 @@ const Dashboard = () => {
           onClose={() => setIsTradeModalOpen(false)}
           onSuccess={() => {
             setIsTradeModalOpen(false);
-            // Hier könntest du auch Funktionen aufrufen, um die Trade-Listen zu aktualisieren
           }}
         />
       )}

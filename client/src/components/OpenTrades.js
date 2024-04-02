@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import translateStatus from './utils/statusTranslations';
 
 const OpenTrades = () => {
     const [openTrades, setOpenTrades] = useState([]);
@@ -154,7 +155,7 @@ const OpenTrades = () => {
                             <td>{trade.sender.username}</td>
                             <td>{trade.receiver.username}</td>
                             <td>{determineUserActionStatus(trade)}</td>
-                            <td>{trade.status}</td>
+                            <td>{translateStatus(trade.status)}</td>
                             <td>
                                 <button onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
                                 <button onClick={() => handleReject(trade._id)}>Ablehnen</button>

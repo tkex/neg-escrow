@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import translateStatus from './utils/statusTranslations';
 
 const UserAcceptedTrades = ({ token }) => {
   const [acceptedTrades, setAcceptedTrades] = useState([]);
@@ -53,7 +54,7 @@ const UserAcceptedTrades = ({ token }) => {
               <td>{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
               <td>{trade.sender.username}</td>
               <td>{trade.receiver.username}</td>
-              <td>{trade.status}</td>
+              <td>{translateStatus(trade.status)}</td>
               <td>
                 {/* Modal-Komponente einfügen  */}
                 <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)}>Details anzeigen</button>
