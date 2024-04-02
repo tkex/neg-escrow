@@ -149,9 +149,9 @@ const OpenTrades = () => {
                             <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
                             <td>{new Date(trade.createdAt).toLocaleTimeString()}</td>
                             <td>{trade.subject}</td>
-                            <td>{trade.initOffer}</td>
-                            <td>{trade.currentOffer}</td>
-                            <td>{trade.offerHistory.join(", ")}</td>
+                            <td>{`${trade.initOffer.toFixed(2)}€`}</td>
+                            <td>{`${trade.currentOffer.toFixed(2)}€`}</td>
+                            <td>{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
                             <td>{trade.sender.username}</td>
                             <td>{trade.receiver.username}</td>
                             <td>{determineUserActionStatus(trade)}</td>
