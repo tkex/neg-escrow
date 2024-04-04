@@ -1,8 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import translateStatus from './utils/statusTranslation';
+import TradeDetailsModal from './TradeDetailsModal';
 
 const GeneralLastTrades = ({ token }) => {
   const [generalTrades, setGeneralTrades] = useState([]);
+
+  // Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState(null);
+
+  // Modal öffnen mit den Details des ausgewählten Trades
+  const handleOpenModal = (trade) => {
+    setSelectedTrade(trade);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     fetch('http://localhost:8000/trades/global-lasttrades', {
@@ -41,7 +52,7 @@ const GeneralLastTrades = ({ token }) => {
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleTimeString()}</td>
                 <td className="px-6 py-4">{trade.subject}</td>
                 <td className="px-6 py-4">{`${trade.initOffer.toFixed(2)}€`}</td>
-                <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : 'N/A'}</td>
+                <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'}</td>
                 <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
                 <td className="px-6 py-4">{trade.sender}</td>
                 <td className="px-6 py-4">{trade.receiver}</td>
@@ -49,13 +60,14 @@ const GeneralLastTrades = ({ token }) => {
                 {translateStatus(trade.status)}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
+                  <button onClick={() => handleOpenModal(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <TradeDetailsModal trade={selectedTrade} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import translateStatus from './utils/statusTranslation';
+import TradeDetailsModal from './TradeDetailsModal';
 
 
 const UserLastDeniedTrades = ({ token }) => {
   const [closedTrades, setClosedTrades] = useState([]);
+
+  // Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState(null);
+
+  const handleOpenModal = (trade) => {
+    setSelectedTrade(trade);
+    setIsModalOpen(true);
+  };
+
 
   useEffect(() => {
     fetch('http://localhost:8000/trades/denied', {
@@ -62,13 +73,14 @@ const UserLastDeniedTrades = ({ token }) => {
                   {translateStatus(trade.status)}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
+                  <button onClick={() => handleOpenModal(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <TradeDetailsModal trade={selectedTrade} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

@@ -66,6 +66,7 @@ const Dashboard = () => {
         />
       )}
       
+      { /* Tabellen 
       <div className="mt-8">
         <OpenTrades token={token} userId={user?.id} />
         <GlobalLastTrades token={token} />
@@ -73,7 +74,30 @@ const Dashboard = () => {
         <UserLastDeniedTrades token={token} />   
         <UserLastClosedTrades token={token} />
       </div>
-    </div>
+      */ }
+
+      <div className="mt-8">
+            <div className="mb-8">
+              <OpenTrades token={token} userId={user?.id} />
+            </div>
+            <hr className="my-8 border-t" />
+            <div className="mb-8">
+              <GlobalLastTrades token={token} />
+            </div>
+            <hr className="my-8 border-t" />
+            <div className="mb-8">
+              <UserConfirmedTrades token={token} />
+            </div>
+            <hr className="my-8 border-t" />
+            <div className="mb-8">
+              <UserLastDeniedTrades token={token} />
+            </div>
+            <hr className="my-8 border-t" />
+            <div className="mb-8">
+              <UserLastClosedTrades token={token} />
+            </div>
+      </div>
+    </div>    
   );
 };
 

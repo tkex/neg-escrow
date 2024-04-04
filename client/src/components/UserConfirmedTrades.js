@@ -1,8 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import translateStatus from './utils/statusTranslation';
+import TradeDetailsModal from './TradeDetailsModal';
 
 const UserConfirmedTrades = ({ token }) => {
   const [acceptedTrades, setAcceptedTrades] = useState([]);
+
+  // Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState(null);
+
+  // Modal öffnen mit den Details des ausgewählten Trades
+  const handleOpenModal = (trade) => {
+    setSelectedTrade(trade);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     fetch('http://localhost:8000/trades/confirmed', {
@@ -59,14 +70,17 @@ const UserConfirmedTrades = ({ token }) => {
                 <td className="px-6 py-4">{trade.sender.username}</td>
                 <td className="px-6 py-4">{trade.receiver.username}</td>
                 <td className="px-6 py-4 text-green-600 font-semibold">{translateStatus(trade.status)}</td>
+                {/* Trade Details */}
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => console.log(`Details für Trade ID: ${trade._id}`)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
+                  <button onClick={() => handleOpenModal(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <TradeDetailsModal trade={selectedTrade} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
     </div>
   );
 };
