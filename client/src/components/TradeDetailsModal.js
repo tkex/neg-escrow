@@ -14,12 +14,18 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
             <DetailItem label="Status" value={translateStatus(trade.status)} status={trade.status} />
             <DetailItem label="Käufer" value={trade.sender?.username || trade.sender} />
             <DetailItem label="Verkäufer" value={trade.receiver?.username || trade.receiver} />
+            <hr className="my-8 border-t" />
+            <DetailItem label="Betreff" value={trade.subject} />
+            <DetailItem label="Beschreibung" value={trade.description} />
             <DetailItem label="Datum" value={new Date(trade.createdAt).toLocaleDateString()} />
             <DetailItem label="Uhrzeit" value={new Date(trade.createdAt).toLocaleTimeString()} />
-            <DetailItem label="Betreff" value={trade.subject} />
+            <hr className="my-8 border-t" />
             <DetailItem label="Initiales Angebot" value={`${trade.initOffer.toFixed(2)}€`} />
             <DetailItem label="Geeinigter Preis" value={trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'} />
             <DetailItem label="Gegenangebot-Historie" value={trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')} />
+            <hr className="my-8 border-t" />
+            <DetailItem label="Chat" />
+
           </div>
           <div className="items-center px-4 py-3">
             <button id="ok-btn" className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={onClose}>

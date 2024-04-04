@@ -50,7 +50,7 @@ const GeneralLastTrades = ({ token }) => {
                 <td className="px-6 py-4">{trade._id.length > 7 ? `${trade._id.substring(0, 10)}...` : trade._id}</td>
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleTimeString()}</td>
-                <td className="px-6 py-4">{trade.subject}</td>
+                <td className="px-6 py-4">{trade.subject.length > 10 ? `${trade.subject.substring(0, 20)}...` : trade.subject}</td>
                 <td className="px-6 py-4">{`${trade.initOffer.toFixed(2)}€`}</td>
                 <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'}</td>
                 <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
