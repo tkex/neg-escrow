@@ -141,7 +141,7 @@ const OpenTrades = () => {
                   <th scope="col" className="px-6 py-3">Käufer (Username)</th>
                   <th scope="col" className="px-6 py-3">Verkäufer (Username)</th>
                   <th scope="col" className="px-6 py-3">Deine Aktion</th>
-                  <th scope="col" className="px-6 py-3">Status des Trades</th>
+                  <th scope="col" className="px-6 py-3">Status</th>
                   <th scope="col" className="px-6 py-3">Aktionen</th>
                 </tr>
               </thead>
