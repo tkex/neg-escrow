@@ -51,8 +51,8 @@ const UserConfirmedTrades = ({ token }) => {
               <th scope="col" className="px-6 py-3">Initiales Angebot</th>
               <th scope="col" className="px-6 py-3">Geeinigter Preis</th>
               <th scope="col" className="px-6 py-3">Gegenangebot-Historie</th>
-              <th scope="col" className="px-6 py-3">Käufer (ID)</th>
-              <th scope="col" className="px-6 py-3">Verkäufer (ID)</th>
+              <th scope="col" className="px-6 py-3">Käufer (Username)</th>
+              <th scope="col" className="px-6 py-3">Verkäufer (Username)</th>
               <th scope="col" className="px-6 py-3">Status</th>
               <th scope="col" className="px-6 py-3">Aktion</th>
             </tr>
