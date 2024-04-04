@@ -8,7 +8,7 @@ import AuthProvider from "./contexts/AuthContext";
 import LoginAndRegister from "./components/LoginAndRegister.js";
 
 const App = () => {
-  return (
+  return (    
     <Router>
       <AuthProvider>
         <Routes>
