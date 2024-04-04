@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import CreateNewTradeButton from './CreateNewTradeButton';
+
 import OpenTrades from './OpenTrades';
 import GlobalLastTrades from './GlobalLastTrades';
 import UserLastDeniedTrades from './UserLastDeniedTrades';
@@ -48,7 +49,7 @@ const Dashboard = () => {
     
     <p className="mb-2 text-lg">Anzahl offener Verhandlungen: <span className="font-semibold">{openTradesCount}</span></p>
     <p className="mb-2 text-lg">Anzahl geschlossener Verhandlungen: <span className="font-semibold">{closedTradesCount}</span></p>
-    <p className="text-lg">Gesamtzahl der Verhandlungen: <span className="font-semibold">{totalTradesCount}</span></p>
+    <p className="text-lg">Gesamtzahl der Verhandlungen im System: <span className="font-semibold">{totalTradesCount}</span></p>
   </div>
 
   <div className="flex flex-col mb-5 items-center">

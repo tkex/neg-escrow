@@ -126,48 +126,55 @@ const OpenTrades = () => {
 
     return (
         <div>
-            <h2>Eigene offene Verhandlungen:</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Uhrzeit der Erstellung</th>
-                        <th>Betreff</th>
-                        <th>Initiales Angebot</th>
-                        <th>Aktuelles Angebot</th>
-                        <th>Gegenangebot-Historie</th>
-                        <th>Käufer (Username)</th>
-                        <th>Verkäufer (Username)</th>
-                        <th>Deine Aktion</th>
-                        <th>Status des Trades</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {openTrades.map((trade) => (
-                        <tr key={trade._id}>
-                            <td>{new Date(trade.createdAt).toLocaleDateString()}</td>
-                            <td>{new Date(trade.createdAt).toLocaleTimeString()}</td>
-                            <td>{trade.subject}</td>
-                            <td>{`${trade.initOffer.toFixed(2)}€`}</td>
-                            <td>{`${trade.currentOffer.toFixed(2)}€`}</td>
-                            <td>{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
-                            <td>{trade.sender.username}</td>
-                            <td>{trade.receiver.username}</td>
-                            <td>{determineUserActionStatus(trade)}</td>
-                            <td>{translateStatus(trade.status)}</td>
-                            <td>
-                                <button onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
-                                <button onClick={() => handleReject(trade._id)}>Ablehnen</button>
-                                <input type="number" value={trade.counterOffer} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
-                                <button onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
+          <h2 className="text-lg font-semibold mb-4">Eigene offene Verhandlungen:</h2>
+          <div className="overflow-x-auto relative shadow-lg sm:rounded-lg">
+            <table className="w-full text-sm text-gray-700">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                  <th scope="col" className="px-6 py-3">Trade-ID</th>
+                  <th scope="col" className="px-6 py-3">Datum</th>
+                  <th scope="col" className="px-6 py-3">Uhrzeit der Erstellung</th>
+                  <th scope="col" className="px-6 py-3">Betreff</th>
+                  <th scope="col" className="px-6 py-3">Initiales Angebot</th>
+                  <th scope="col" className="px-6 py-3">Aktuelles Angebot</th>
+                  <th scope="col" className="px-6 py-3">Gegenangebot-Historie</th>
+                  <th scope="col" className="px-6 py-3">Käufer (Username)</th>
+                  <th scope="col" className="px-6 py-3">Verkäufer (Username)</th>
+                  <th scope="col" className="px-6 py-3">Deine Aktion</th>
+                  <th scope="col" className="px-6 py-3">Status des Trades</th>
+                  <th scope="col" className="px-6 py-3">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {openTrades.map((trade) => (
+                  <tr key={trade._id} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-6 py-4">{trade._id.length > 7 ? `${trade._id.substring(0, 10)}...` : trade._id}</td>
+                    <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleTimeString()}</td>
+                    <td className="px-6 py-4">{trade.subject}</td>
+                    <td className="px-6 py-4">{`${trade.initOffer.toFixed(2)}€`}</td>
+                    <td className="px-6 py-4">{`${trade.currentOffer.toFixed(2)}€`}</td>
+                    <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
+                    <td className="px-6 py-4">{trade.sender.username}</td>
+                    <td className="px-6 py-4">{trade.receiver.username}</td>
+                    <td className="px-6 py-4">{determineUserActionStatus(trade)}</td>
+                    <td className={`px-6 py-4 font-semibold ${trade.status === 'confirmed' ? 'text-green-600' : trade.status === 'rejected' ? 'text-red-600' : trade.status === 'pending' ? 'text-amber-300' : 'text-gray-600'}`}>
+                    {translateStatus(trade.status)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+                      <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+                      <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
+                      <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
+          </div>
         </div>
-    );
+      );
+      
 };
 
 export default OpenTrades;

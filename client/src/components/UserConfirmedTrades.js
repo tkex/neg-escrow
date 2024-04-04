@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import translateStatus from './utils/statusTranslation';
 
-const UserAcceptedTrades = ({ token }) => {
+const UserConfirmedTrades = ({ token }) => {
   const [acceptedTrades, setAcceptedTrades] = useState([]);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const UserAcceptedTrades = ({ token }) => {
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleTimeString()}</td>
                 <td className="px-6 py-4">{trade.subject}</td>
                 <td className="px-6 py-4">{`${trade.initOffer.toFixed(2)}€`}</td>
-                <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : 'N/A'}</td>
+                <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'}</td>
                 <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
                 <td className="px-6 py-4">{trade.sender.username}</td>
                 <td className="px-6 py-4">{trade.receiver.username}</td>
@@ -72,4 +72,4 @@ const UserAcceptedTrades = ({ token }) => {
 };
 
 
-export default UserAcceptedTrades;
+export default UserConfirmedTrades;
