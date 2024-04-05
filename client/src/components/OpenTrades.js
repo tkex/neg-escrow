@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import translateStatus from './utils/statusTranslation';
+import TradeDetailsModal from './TradeDetailsModal';
 
 const OpenTrades = () => {
     const [openTrades, setOpenTrades] = useState([]);
 
     const userId = localStorage.getItem('userId');
+
+
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTrade, setSelectedTrade] = useState(null);
+
+
+    const openModalWithTradeDetails = (tradeDetails) => {
+        setSelectedTrade(tradeDetails);
+        setIsModalOpen(true);
+    };
+    
 
     useEffect(() => {
         fetchOpenTrades();
@@ -143,6 +156,7 @@ const OpenTrades = () => {
                   <th scope="col" className="px-6 py-3">Deine Aktion</th>
                   <th scope="col" className="px-6 py-3">Status</th>
                   <th scope="col" className="px-6 py-3">Aktionen</th>
+                  <th scope="col" className="px-6 py-3">Modal</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,11 +181,18 @@ const OpenTrades = () => {
                       <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
                       <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
                     </td>
+                    <td><button onClick={() => openModalWithTradeDetails(trade)}>Details</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+                    <TradeDetailsModal 
+                trade={selectedTrade} 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+            />
         </div>
       );
       
