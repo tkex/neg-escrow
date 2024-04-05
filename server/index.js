@@ -604,6 +604,7 @@ app.get("/trades/count/total", async (req, res) => {
 
 // Einrichten von httpServer und socket.io
 const httpServer = createServer(app);
+
 const io = new Server(httpServer, {
   cors: {
     origin: 'http://localhost:3000',
@@ -612,6 +613,38 @@ const io = new Server(httpServer, {
     credentials: true
   }
 });
+
+httpServer.listen(PORT, () => {
+    console.log(`Server läuft auf Port ${PORT}`);
+  });
+
+
+// Socket.IO Konfiguration
+const chatSchema = new mongoose.Schema({
+    tradeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'Trade'
+    },
+    messages: [{
+      sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+      },
+      message: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
+  });
+  
+  const Chat = mongoose.model("Chat", chatSchema);
+
 
 io.use((socket, next) => {
   const token = socket.handshake.query.token;
@@ -643,60 +676,35 @@ io.on("connection", (socket) => {
       });
     
       socket.on("sendMessage", async ({ tradeId, message }) => {
-          const userId = socket.userId; // Verwende die verifizierte userId aus der Middleware
-
-          const trade = await TradeModel.findById(tradeId);
-          if (trade && (trade.sender.toString() === userId || trade.receiver.toString() === userId) && trade.status === 'pending') {
-            const chatMessage = new ChatMessage({ tradeId, sender: userId, message });
-            await chatMessage.save();
-            
-            io.to(tradeId).emit("receiveMessage", {
-              tradeId,
-              message: chatMessage.message,
-              sender: userId,
-              createdAt: chatMessage.createdAt
-            });
-          } else {
-            socket.emit("error", "Nachricht konnte nicht gesendet werden.");
-          }
-        });
+        const userId = socket.userId;
+      
+        const trade = await TradeModel.findById(tradeId);
+        if (trade && (trade.sender.toString() === userId || trade.receiver.toString() === userId) && trade.status === 'pending') {
+          const chatMessage = { sender: userId, message };
+          
+          // Hinzufügen der Nachricht zum Chat-Dokument
+          await Chat.findOneAndUpdate({ tradeId }, { $push: { messages: chatMessage } }, { new: true, upsert: true });
+          
+          io.to(tradeId).emit("receiveMessage", {
+            tradeId,
+            message: chatMessage.message,
+            sender: userId,
+            createdAt: chatMessage.createdAt
+          });
+        } else {
+          socket.emit("error", "Nachricht konnte nicht gesendet werden.");
+        }
+      });
   
     // Weitere Event-Handler...
   });
   
-  httpServer.listen(PORT, () => {
-    console.log(`Server läuft auf Port ${PORT}`);
-  });
-
-
-// Socket.IO Konfiguration
-const chatMessageSchema = new mongoose.Schema({
-    tradeId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Trade'
-    },
-    sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-    },
-    message: {
-        type: String,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-
-const ChatMessage = mongoose.model("chat", chatMessageSchema);
 
 
 
 
-app.get("/trade/:tradeId/chat", authenticate, async (req, res) => {
+
+  app.get("/trade/:tradeId/chat", authenticate, async (req, res) => {
     const { tradeId } = req.params;
     const userId = req.user.userId;
   
@@ -705,15 +713,18 @@ app.get("/trade/:tradeId/chat", authenticate, async (req, res) => {
       return res.status(404).json({ message: "Handel nicht gefunden." });
     }
   
-    // Prüfen, ob der Benutzer am Handel beteiligt ist
     if (trade.sender.toString() !== userId && trade.receiver.toString() !== userId) {
       return res.status(403).json({ message: "Nicht berechtigt." });
     }
   
-    const messages = await ChatMessage.find({ tradeId })
-      .populate('sender', 'username')
-      .sort({ createdAt: 1 });
+    const chat = await Chat.findOne({ tradeId })
+      .populate('messages.sender', 'username');
   
-    res.json(messages);
+    if (!chat) {
+      return res.status(404).json({ message: "Keine Nachrichten gefunden." });
+    }
+  
+    res.json(chat.messages);
   });
+  
   
