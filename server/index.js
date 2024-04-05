@@ -632,6 +632,11 @@ const chatSchema = new mongoose.Schema({
         required: true,
         ref: 'User'
       },
+      receiver: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+      },
       message: {
         type: String,
         required: true
