@@ -1,11 +1,13 @@
-import express from "express"
-import mongoose from "mongoose"
-import dotenv from "dotenv"
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 import bcrypt from 'bcrypt';
 import cron from 'node-cron';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
-
+// Socket.IO
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 const app = express();
 dotenv.config();
@@ -27,14 +29,21 @@ app.use(express.json());
 const PORT = process.env.PORT || 7000;
 const MONGOURL = process.env.MONGO_URL;
 
-mongoose.connect(MONGOURL).then(() => {
-    console.log("Datenbank ist verbunden!")
-    app.listen(PORT, () => {
-        console.log(`Server läuft auf Port ${PORT}`)
-    })
-}).catch((error) => {
+mongoose.connect(MONGOURL)
+  .then(() => {
+    console.log("Datenbank ist verbunden!");
+  })
+  .catch((error) => {
     console.log(error);
-});
+  });
+
+
+
+
+
+
+
+  
 
 const userSchema = new mongoose.Schema({
     // Email vom Nutzer
@@ -589,3 +598,122 @@ app.get("/trades/count/total", async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+
+
+
+// Einrichten von httpServer und socket.io
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }
+});
+
+io.use((socket, next) => {
+  const token = socket.handshake.query.token;
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return next(new Error("Authentication error"));
+    socket.userId = decoded.userId; // Speichere die userId im Socket für die weitere Verwendung
+    next();
+  });
+});
+
+io.on("connection", (socket) => {
+    console.log("Ein Benutzer ist verbunden", socket.userId);
+  
+    socket.on("joinTrade", async ({ tradeId }) => {
+        try {
+          const userId = socket.userId; // Verwende die verifizierte userId aus der Middleware
+          const trade = await TradeModel.findById(tradeId);
+          // Überprüfe, ob der Trade existiert und ob der Benutzer entweder der Sender oder der Empfänger ist
+          if (trade && (trade.sender.toString() === userId || trade.receiver.toString() === userId) && trade.status === 'pending') {
+            socket.join(tradeId);
+            console.log(`Benutzer ${userId} ist dem Raum für Trade ${tradeId} beigetreten`);
+          } else {
+            socket.emit("error", "Beitritt zum Chat nicht möglich.");
+          }
+        } catch (error) {
+          console.error("Fehler beim Beitritt zum Trade-Chat:", error);
+          socket.emit("error", "Ein Fehler ist aufgetreten.");
+        }
+      });
+    
+      socket.on("sendMessage", async ({ tradeId, message }) => {
+          const userId = socket.userId; // Verwende die verifizierte userId aus der Middleware
+
+          const trade = await TradeModel.findById(tradeId);
+          if (trade && (trade.sender.toString() === userId || trade.receiver.toString() === userId) && trade.status === 'pending') {
+            const chatMessage = new ChatMessage({ tradeId, sender: userId, message });
+            await chatMessage.save();
+            
+            io.to(tradeId).emit("receiveMessage", {
+              tradeId,
+              message: chatMessage.message,
+              sender: userId,
+              createdAt: chatMessage.createdAt
+            });
+          } else {
+            socket.emit("error", "Nachricht konnte nicht gesendet werden.");
+          }
+        });
+  
+    // Weitere Event-Handler...
+  });
+  
+  httpServer.listen(PORT, () => {
+    console.log(`Server läuft auf Port ${PORT}`);
+  });
+
+
+// Socket.IO Konfiguration
+const chatMessageSchema = new mongoose.Schema({
+    tradeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Trade'
+    },
+    sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const ChatMessage = mongoose.model("chat", chatMessageSchema);
+
+
+
+
+app.get("/trade/:tradeId/chat", authenticate, async (req, res) => {
+    const { tradeId } = req.params;
+    const userId = req.user.userId;
+  
+    const trade = await TradeModel.findById(tradeId);
+    if (!trade) {
+      return res.status(404).json({ message: "Handel nicht gefunden." });
+    }
+  
+    // Prüfen, ob der Benutzer am Handel beteiligt ist
+    if (trade.sender.toString() !== userId && trade.receiver.toString() !== userId) {
+      return res.status(403).json({ message: "Nicht berechtigt." });
+    }
+  
+    const messages = await ChatMessage.find({ tradeId })
+      .populate('sender', 'username')
+      .sort({ createdAt: 1 });
+  
+    res.json(messages);
+  });
+  
