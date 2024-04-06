@@ -181,7 +181,7 @@ const OpenTrades = () => {
                       <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
                       <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
                     </td>
-                    <td><button onClick={() => openModalWithTradeDetails(trade)}>Details</button>
+                    <td><button onClick={() => openModalWithTradeDetails(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                     </td>
                   </tr>
                 ))}
