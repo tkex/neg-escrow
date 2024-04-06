@@ -11,30 +11,17 @@ const socket = io('http://localhost:8000', {
 const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [connectionStatus, setConnectionStatus] = useState('connecting');
     const currentUser = localStorage.getItem('username');
 
     useEffect(() => {
         if (isOpen && trade) {
-            socket.emit('joinTrade', { tradeId: trade._id });
-
-            socket.on('connect', () => {
-                setConnectionStatus('connected');
-            });
-
-            socket.on('disconnect', () => {
-                setConnectionStatus('disconnected');
-            });
-
-            socket.on('connect_error', () => {
-                setConnectionStatus('failed');
-            });
-
+            socket.emit('joinTrade', { tradeId: trade._id });    
+              
             socket.on('receiveMessage', (message) => {
                 setMessages((prevMessages) => [...prevMessages, { ...message, createdAt: message.createdAt || new Date().toISOString() }]);
             });
-
-            // Abrufen vorhandener Nachrichten für den Trade
+    
+            // Abrufen vorhandener Nachrichten für den Handel
             (async () => {
                 try {
                     const response = await fetch(`http://localhost:8000/trade/${trade._id}/chat`, {
@@ -52,7 +39,8 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                 }
             })();
         }
-
+    
+        // Bereinigen(Entfernen aller Listener
         return () => {
             socket.off('connect');
             socket.off('disconnect');
@@ -74,7 +62,7 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return !isNaN(date) ? `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` : 'Ungültiges Datum';
+        return !isNaN(date) ? `${date.toLocaleDateString()} - ${date.toLocaleTimeString()}` : 'Ungültiges Datum';
     };
 
 
@@ -104,15 +92,17 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                     
                     <hr className="my-4 border-t" />
                     <h3 className="text-lg leading-6 font-medium text-gray-900">Chat</h3>
-                    <div className={`connection-status my-2 ${connectionStatus === 'connecting' ? 'text-gray-400' : 'text-green-500'}`}>
-                        <span>Status: {connectionStatus === 'connected' ? 'Chat ist verbunden.' : 'Chat wird hergestellt...'}</span>
+                    {/* TODO: Dynamisch nach Socket.IO Connection-State implementieren */}
+                    <div className="my-2 text-gray-400">
+                        <span>Status: Verbindung ist hergestellt.</span>
                     </div>
+
                     <div className="chat-messages max-h-64 overflow-y-auto bg-gray-100 p-3 rounded">
                 
                     {messages.map((msg, index) => (
                     <div key={index} className="message mb-2 p-2 bg-white rounded shadow">
                         <div className="message-header text-sm font-semibold">
-                            <span className="text-blue-500">{msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Jemand'}:</span>
+                            <span className="text-blue-500">{msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Nicht bekannt'}:</span>
                             <span className="text-gray-400 text-xs float-right">{formatDate(msg.createdAt)}</span>
                         </div>
                         <p className="text-sm">{msg.message}</p>
@@ -136,7 +126,6 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
     </div>
 );
 };
-
 
 
 const DetailItem = ({ label, value, status }) => (
