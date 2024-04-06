@@ -16,10 +16,11 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
     useEffect(() => {
         if (isOpen && trade) {
             socket.emit('joinTrade', { tradeId: trade._id });    
-              
+    
             socket.on('receiveMessage', (message) => {
-                setMessages((prevMessages) => [...prevMessages, { ...message, createdAt: message.createdAt || new Date().toISOString() }]);
+                setMessages(prevMessages => [...prevMessages, { ...message, createdAt: message.createdAt || new Date().toISOString() }]);
             });
+    
     
             // Abrufen vorhandener Nachrichten für den Handel
             (async () => {
@@ -40,7 +41,6 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
             })();
         }
     
-        // Bereinigen(Entfernen aller Listener
         return () => {
             socket.off('connect');
             socket.off('disconnect');
@@ -51,12 +51,20 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
 
     const sendMessage = () => {
         if (newMessage.trim()) {
-            const tempMessage = { message: newMessage, sender: { username: currentUser }, createdAt: new Date().toISOString() };
-            setMessages((prevMessages) => [...prevMessages, tempMessage]);
-            socket.emit('sendMessage', { tradeId: trade._id, message: newMessage });
+            // Vorbereiten der Nachricht mit dem aktuellen Benutzernamen
+            const messageObject = {
+                tradeId: trade._id,
+                message: newMessage,
+                sender: { username: currentUser },
+                createdAt: new Date().toISOString()
+            };
+            // Senden der Nachricht zum Server
+            socket.emit('sendMessage', messageObject);
             setNewMessage('');
         }
     };
+    
+    
 
     if (!isOpen || !trade) return null;
 
@@ -64,7 +72,6 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
         const date = new Date(dateString);
         return !isNaN(date) ? `${date.toLocaleDateString()} - ${date.toLocaleTimeString()}` : 'Ungültiges Datum';
     };
-
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onClick={onClose}>
@@ -102,12 +109,13 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                     {messages.map((msg, index) => (
                     <div key={index} className="message mb-2 p-2 bg-white rounded shadow">
                         <div className="message-header text-sm font-semibold">
-                            <span className="text-blue-500">{msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Nicht bekannt'}:</span>
-                            <span className="text-gray-400 text-xs float-right">{formatDate(msg.createdAt)}</span>
+                        <span className="text-blue-500">{msg.sender.username && msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Nicht bekannt'}:</span>
+                        <span className="text-gray-400 text-xs float-right">{formatDate(msg.createdAt)}</span>
                         </div>
                         <p className="text-sm">{msg.message}</p>
                     </div>
                     ))}
+
                     </div>
                     <div className="mt-4 flex">
                         <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow mr-2"/>
