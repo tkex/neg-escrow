@@ -5,7 +5,10 @@ import TradeDetailsModal from './TradeDetailsModal';
 const OpenTrades = () => {
     const [openTrades, setOpenTrades] = useState([]);
 
-    const userId = localStorage.getItem('userId');
+    // Benutzerdaten aus localStorage abrufen und die ID extrahieren
+    const user = JSON.parse(localStorage.getItem('user'));
+    const userId = user?.id; // Zugriff auf die ID, wenn das 'user'-Objekt vorhanden ist
+    console.log('Aktuelle Benutzer-ID:', userId);
 
 
 
@@ -117,25 +120,53 @@ const OpenTrades = () => {
 
 
     const determineUserActionStatus = (trade) => {
-        // Bestätigt
-        if (trade.status === 'confirmed') return 'Bestätigt';
-        // Abgelehnt
-        if (trade.status === 'rejected') return 'Abgelehnt';
-        // Akzeptiert von beiden
-        if (trade.senderConfirmed && trade.receiverConfirmed) return 'Akzeptiert von beiden';
-        // Spezifische Fälle, abhängig von der Rolle des Benutzers und der Aktion
-        if (trade.sender.toString() === userId) {
-            if (trade.senderConfirmed) return 'Von dir gesendet und bestätigt';
-            if (trade.receiverHasMadeCounterOffer) return 'Gegenangebot erhalten';
-            return 'Anfrage gesendet'; // Standardstatus für den Sender, wenn noch keine weitere Aktion erfolgt ist
-        } else if (trade.receiver.toString() === userId) {
-            if (trade.receiverConfirmed) return 'Von dir akzeptiert';
-            if (trade.senderHasMadeCounterOffer) return 'Gegenangebot gemacht';
-            return 'Anfrage erhalten'; // Standardstatus für den Empfänger, wenn noch keine Aktion erfolgt ist
+        // Wenn der Handel noch in der Anfangsphase ist
+        if (trade.senderAccepted && !trade.receiverAccepted && !trade.senderHasMadeCounterOffer && !trade.receiverHasMadeCounterOffer) {
+            return 'Initialangebot gemacht';
         }
-        return 'Noch keine Aktion'; // Fallback, sollte theoretisch nicht erreicht werden
+    
+        // **
+        // Wenn der Empfänger das Angebot abgelehnt hat (eigentlich überflüssig da "offene" Verhandlungen )
+        if (!trade.receiverAccepted && trade.status === 'rejected') {
+            return 'Angebot abgelehnt';
+        }
+    
+        // Wenn der Empfänger das Angebot akzeptiert hat (eigentlich überflüssig da "offene" Verhandlungen )
+        if (trade.receiverAccepted && trade.status === 'confirmed') {
+            return 'Angebot akzeptiert';
+        }
+        // **
+    
+        // Wenn der Empfänger ein Gegenangebot gemacht hat
+        if (!trade.senderAccepted && trade.receiverAccepted && !trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer) {
+            return 'Gegenangebot erhalten';
+        }
+    
+        // Wenn der Sender ein Gegenangebot gemacht hat
+        if (trade.senderAccepted && !trade.receiverAccepted && trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer) {
+            return 'Gegenangebot gemacht';
+        }
+    
+        // Für alle anderen Fälle bspw. wenn noch keine Aktion durchgeführt wurde
+        return 'Keine Aktion';
     };
     
+    
+    // Hilfsfunktion um zu bestimmen, ob der aktuell angemeldete Benutzer der Sender des Handels ist
+    //const isCurrentUserTheSender = (trade) => {
+    //    return trade.sender === userId;
+    //};
+    const isCurrentUserTheSender = (trade) => {
+        // Zugriff auf die ID innerhalb des sender-Objekts, nachdem die Änderungen im Backend vorgenommen wurden
+        const isSender = trade.sender._id === userId;
+        console.log(`Ist der aktuelle Benutzer der Sender für Handel ${trade._id}?`, isSender, `Sender-ID: ${trade.sender._id}, User-ID: ${userId}`);
+        return isSender;
+    };
+    
+    
+    
+      
+   
 
     return (
         <div>
@@ -153,14 +184,17 @@ const OpenTrades = () => {
                   <th scope="col" className="px-6 py-3">Gegenangebot-Historie</th>
                   <th scope="col" className="px-6 py-3">Käufer (Username)</th>
                   <th scope="col" className="px-6 py-3">Verkäufer (Username)</th>
-                  <th scope="col" className="px-6 py-3">Deine Aktion</th>
+                  <th scope="col" className="px-6 py-3">Letzte Aktion</th>
                   <th scope="col" className="px-6 py-3">Status</th>
-                  <th scope="col" className="px-6 py-3">Aktionen</th>
+                  <th scope="col" className="px-6 py-3">Verfügbare Aktionen</th>
                   <th scope="col" className="px-6 py-3">Modal</th>
                 </tr>
               </thead>
               <tbody>
                 {openTrades.map((trade) => (
+
+                 
+
                   <tr key={trade._id} className="bg-white border-b hover:bg-gray-50">
                     <td className="px-6 py-4">{trade._id.length > 7 ? `${trade._id.substring(0, 10)}...` : trade._id}</td>
                     <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleDateString()}</td>
@@ -175,12 +209,43 @@ const OpenTrades = () => {
                     <td className={`px-6 py-4 font-semibold ${trade.status === 'confirmed' ? 'text-green-600' : trade.status === 'rejected' ? 'text-red-600' : trade.status === 'pending' ? 'text-amber-300' : 'text-gray-600'}`}>
                     {translateStatus(trade.status)}
                     </td>
+
                     <td className="px-6 py-4 text-right">
-                      <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
-                      <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
-                      <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
-                      <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
-                    </td>
+      {isCurrentUserTheSender(trade) ? (
+        // Logik für den Sender
+        !trade.senderAccepted && trade.receiverAccepted && !trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer && (
+          // Akzeptieren, Ablehnen, Gegenangebot Optionen für den Sender
+        <>
+          <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+          <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+          <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer || ''} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
+          <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
+        </>
+        )
+      ) : (
+        // Logik für den Empfänger
+        trade.senderAccepted && !trade.receiverAccepted && (
+          <>
+            {(!trade.senderHasMadeCounterOffer && !trade.receiverHasMadeCounterOffer) && (
+              // Akzeptieren, Ablehnen, Gegenangebot Optionen für den Empfänger, wenn kein Gegenangebot gemacht wurde
+              <>
+              <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+              <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+              <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer || ''} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
+              <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
+              </>
+            )}
+            {(trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer) && (
+              // Akzeptieren, Ablehnen Optionen für den Empfänger, wenn beide Seiten Gegenangebote gemacht haben
+              <>
+              <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+              <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+              </>
+            )}
+          </>
+        )
+      )}
+    </td>
                     <td><button onClick={() => openModalWithTradeDetails(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                     </td>
                   </tr>

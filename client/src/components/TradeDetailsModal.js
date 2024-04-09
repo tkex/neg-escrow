@@ -109,7 +109,7 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                     {messages.map((msg, index) => (
                     <div key={index} className="message mb-2 p-2 bg-white rounded shadow">
                         <div className="message-header text-sm font-semibold">
-                        <span className="text-blue-500">{msg.sender.username && msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Nicht bekannt'}:</span>
+                        <span className="text-blue-500">{msg.sender.username && msg.sender.username === currentUser ? 'Du' : msg.sender.username || 'Du'}:</span>
                         <span className="text-gray-400 text-xs float-right">{formatDate(msg.createdAt)}</span>
                         </div>
                         <p className="text-sm">{msg.message}</p>

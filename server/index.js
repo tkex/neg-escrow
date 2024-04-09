@@ -476,7 +476,8 @@ app.get("/user/open-trades", authenticate, async (req, res) => {
         const openTrades = await TradeModel.find({
             $or: [{ sender: userId }, { receiver: userId }],
             status: 'pending'
-        }).populate('sender receiver', 'username');
+        }).populate([{ path: 'sender', select: 'username _id' }, { path: 'receiver', select: 'username _id' }]);
+        
 
         res.json(openTrades);
 
