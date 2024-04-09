@@ -24,6 +24,12 @@ const GeneralLastTrades = ({ token }) => {
       .catch(error => console.error('Fehler generelle Verhandlungen zu holen:', error));
   }, [token]);
 
+
+  // Funktion zum sicheren Anzeigen von Daten basierend auf dem 'isConfidential'-Flag
+  const displayConfidential = (data, isConfidential) => {
+    return isConfidential ? "Vertraulich" : data;
+  };
+
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">Anzeige der 10 letzten globalen Verhandlungen:</h2>
@@ -40,6 +46,7 @@ const GeneralLastTrades = ({ token }) => {
               <th scope="col" className="px-6 py-3">Gegenangebot-Historie</th>
               <th scope="col" className="px-6 py-3">Käufer (ID)</th>
               <th scope="col" className="px-6 py-3">Verkäufer (ID)</th>
+              <th scope="col" className="px-6 py-3">Vertraulich</th>
               <th scope="col" className="px-6 py-3">Status</th>
               <th scope="col" className="px-6 py-3">Aktion</th>
             </tr>
@@ -50,12 +57,13 @@ const GeneralLastTrades = ({ token }) => {
                 <td className="px-6 py-4">{trade._id.length > 7 ? `${trade._id.substring(0, 10)}...` : trade._id}</td>
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4">{new Date(trade.createdAt).toLocaleTimeString()}</td>
-                <td className="px-6 py-4">{trade.subject.length > 10 ? `${trade.subject.substring(0, 20)}...` : trade.subject}</td>
-                <td className="px-6 py-4">{`${trade.initOffer.toFixed(2)}€`}</td>
-                <td className="px-6 py-4">{trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'}</td>
-                <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
+                <td className="px-6 py-4">{displayConfidential(trade.subject, trade.isConfidential)}</td>
+                <td className="px-6 py-4">{displayConfidential(`${trade.initOffer.toFixed(2)}€`, trade.isConfidential)}</td>
+                <td className="px-6 py-4">{displayConfidential(trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-', trade.isConfidential)}</td>
+                <td className="px-6 py-4">{displayConfidential(trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → '), trade.isConfidential)}</td>
                 <td className="px-6 py-4">{trade.sender}</td>
                 <td className="px-6 py-4">{trade.receiver}</td>
+                <td className="px-6 py-4">{trade.isConfidential ? "Ja" : "Nein"}</td>
                 <td className={`px-6 py-4 font-semibold ${trade.status === 'confirmed' ? 'text-green-600' : trade.status === 'rejected' ? 'text-red-600' : trade.status === 'pending' ? 'text-amber-300' : 'text-gray-600'}`}>
                 {translateStatus(trade.status)}
                 </td>

@@ -87,12 +87,11 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                         <DetailItem label="Verkäufer" value={trade.receiver?.username || trade.receiver} isConfidential={trade.isConfidential} />
                         <DetailItem label="Betreff" value={trade.subject} isConfidential={trade.isConfidential} />
                         <DetailItem label="Beschreibung" value={trade.description} isConfidential={trade.isConfidential} />
-                        <DetailItem label="Datum" value={new Date(trade.createdAt).toLocaleDateString()} isConfidential={trade.isConfidential} />
-                        <DetailItem label="Uhrzeit" value={new Date(trade.createdAt).toLocaleTimeString()} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Datum" value={new Date(trade.createdAt).toLocaleDateString()} />
+                        <DetailItem label="Uhrzeit" value={new Date(trade.createdAt).toLocaleTimeString()} />
                         <DetailItem label="Initiales Angebot" value={`${trade.initOffer.toFixed(2)}€`} isConfidential={trade.isConfidential} />
                         <DetailItem label="Geeinigter Preis" value={trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'} isConfidential={trade.isConfidential} />
                         <DetailItem label="Gegenangebot-Historie" value={trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')} isConfidential={trade.isConfidential} />
-
                     </div>
                     
                     
