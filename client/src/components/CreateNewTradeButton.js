@@ -12,6 +12,11 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
 
+  // Zustand ob Verhandlung vertrauenswürdig ist
+  const [isConfidential, setIsConfidential] = useState(false);
+
+
+
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
@@ -58,6 +63,7 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
           initOffer: parseFloat(initOffer),
           subject, // Betreff
           description, // Beschreibung
+          isConfidential
         }),
       });
 
@@ -135,6 +141,20 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
                 />
               </div>
           </div>
+
+          <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={isConfidential}
+              onChange={e => setIsConfidential(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600"
+            />
+            <span className="ml-2 text-gray-700">Vertraulich</span>
+          </label>
+        </div>
+
+
             <div className="flex items-center justify-between">
               <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 Angebot senden

@@ -177,6 +177,7 @@ const OpenTrades = () => {
                   <th scope="col" className="px-6 py-3">Gegenangebot-Historie</th>
                   <th scope="col" className="px-6 py-3">Käufer (Username)</th>
                   <th scope="col" className="px-6 py-3">Verkäufer (Username)</th>
+                  <th scope="col" className="px-6 py-3">Vertraulich</th>
                   <th scope="col" className="px-6 py-3">Letzte Aktion</th>
                   <th scope="col" className="px-6 py-3">Status</th>
                   <th scope="col" className="px-6 py-3">Verfügbare Aktionen</th>
@@ -198,6 +199,7 @@ const OpenTrades = () => {
                     <td className="px-6 py-4">{trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')}</td>
                     <td className="px-6 py-4">{trade.sender.username}</td>
                     <td className="px-6 py-4">{trade.receiver.username}</td>
+                    <td className="px-6 py-4">{trade.isConfidential ? "Ja" : "Nein"}</td>
                     <td className="px-6 py-4">{determineUserActionStatus(trade)}</td>
                     <td className={`px-6 py-4 font-semibold ${trade.status === 'confirmed' ? 'text-green-600' : trade.status === 'rejected' ? 'text-red-600' : trade.status === 'pending' ? 'text-amber-300' : 'text-gray-600'}`}>
                     {translateStatus(trade.status)}

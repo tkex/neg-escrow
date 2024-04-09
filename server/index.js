@@ -247,6 +247,11 @@ const tradeSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // Zur Definition, ob Verhandlung öffentlich oder privat sein soll
+    isConfidential: {
+        type: Boolean,
+        default: false,
+    },
 });
 
     
@@ -256,7 +261,7 @@ const TradeModel = mongoose.model("Trade", tradeSchema);
 // Route für Handelsanfrage senden
 app.post("/trade/request", authenticate, async (req, res) => {
     try {
-        const { receiver, tradeType, initOffer, subject, description } = req.body;
+        const { receiver, tradeType, initOffer, subject, description, isConfidential  } = req.body;
 
         // req.user ist gesetzt von der Authenticate Middleware und beinhaltet userId
         const sender = req.user.userId;
@@ -280,7 +285,8 @@ app.post("/trade/request", authenticate, async (req, res) => {
             currentOffer: initOffer,
             lastOfferBy: 'sender',
             senderAccepted: true,
-            offerHistory: [initOffer]
+            offerHistory: [initOffer],
+            isConfidential
         });
 
         // Sender hat das erste Angebot gemacht

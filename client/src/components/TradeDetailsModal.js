@@ -83,17 +83,16 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                         {/* Trade Details  */}
                         <DetailItem label="Trade-ID" value={trade._id} />
                         <DetailItem label="Status" value={translateStatus(trade.status)} status={trade.status} />
-                        <DetailItem label="Käufer" value={trade.sender?.username || trade.sender} />
-                        <DetailItem label="Verkäufer" value={trade.receiver?.username || trade.receiver} />
-                        <hr className="my-8 border-t" />
-                        <DetailItem label="Betreff" value={trade.subject} />
-                        <DetailItem label="Beschreibung" value={trade.description} />
-                        <DetailItem label="Datum" value={new Date(trade.createdAt).toLocaleDateString()} />
-                        <DetailItem label="Uhrzeit" value={new Date(trade.createdAt).toLocaleTimeString()} />
-                        <hr className="my-8 border-t" />
-                        <DetailItem label="Initiales Angebot" value={`${trade.initOffer.toFixed(2)}€`} />
-                        <DetailItem label="Geeinigter Preis" value={trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'} />
-                        <DetailItem label="Gegenangebot-Historie" value={trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')} />
+                        <DetailItem label="Käufer" value={trade.sender?.username || trade.sender} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Verkäufer" value={trade.receiver?.username || trade.receiver} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Betreff" value={trade.subject} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Beschreibung" value={trade.description} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Datum" value={new Date(trade.createdAt).toLocaleDateString()} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Uhrzeit" value={new Date(trade.createdAt).toLocaleTimeString()} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Initiales Angebot" value={`${trade.initOffer.toFixed(2)}€`} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Geeinigter Preis" value={trade.acceptedPrice ? `${trade.acceptedPrice.toFixed(2)}€` : '-'} isConfidential={trade.isConfidential} />
+                        <DetailItem label="Gegenangebot-Historie" value={trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')} isConfidential={trade.isConfidential} />
+
                     </div>
                     
                     
@@ -136,13 +135,14 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
 };
 
 
-const DetailItem = ({ label, value, status }) => (
-  <div className="flex justify-between items-center">
-    <span className="font-semibold">{label}:</span>
-    <span className={`${status === 'confirmed' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : status === 'pending' ? 'text-yellow-500' : 'text-gray-500'}`}>
-      {value}
-    </span>
-  </div>
-);
+const DetailItem = ({ label, value, status, isConfidential }) => (
+    <div className="flex justify-between items-center">
+      <span className="font-semibold">{label}:</span>
+      <span className={`${status === 'confirmed' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : status === 'pending' ? 'text-yellow-500' : 'text-gray-500'}`}>
+        {isConfidential ? "Vertraulich" : value}
+      </span>
+    </div>
+  );
+  
 
 export default TradeDetailsModal;
