@@ -153,21 +153,14 @@ const OpenTrades = () => {
     
     
     // Hilfsfunktion um zu bestimmen, ob der aktuell angemeldete Benutzer der Sender des Handels ist
-    //const isCurrentUserTheSender = (trade) => {
-    //    return trade.sender === userId;
-    //};
     const isCurrentUserTheSender = (trade) => {
-        // Zugriff auf die ID innerhalb des sender-Objekts, nachdem die Änderungen im Backend vorgenommen wurden
+        // Zugriff auf die ID innerhalb des sender-Objekts
         const isSender = trade.sender._id === userId;
         console.log(`Ist der aktuelle Benutzer der Sender für Handel ${trade._id}?`, isSender, `Sender-ID: ${trade.sender._id}, User-ID: ${userId}`);
         return isSender;
     };
     
-    
-    
-      
    
-
     return (
         <div>
           <h2 className="text-lg font-semibold mb-4">Eigene offene Verhandlungen:</h2>
@@ -211,41 +204,63 @@ const OpenTrades = () => {
                     </td>
 
                     <td className="px-6 py-4 text-right">
-      {isCurrentUserTheSender(trade) ? (
-        // Logik für den Sender
-        !trade.senderAccepted && trade.receiverAccepted && !trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer && (
-          // Akzeptieren, Ablehnen, Gegenangebot Optionen für den Sender
-        <>
-          <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
-          <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
-          <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer || ''} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
-          <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
-        </>
-        )
-      ) : (
-        // Logik für den Empfänger
-        trade.senderAccepted && !trade.receiverAccepted && (
-          <>
-            {(!trade.senderHasMadeCounterOffer && !trade.receiverHasMadeCounterOffer) && (
-              // Akzeptieren, Ablehnen, Gegenangebot Optionen für den Empfänger, wenn kein Gegenangebot gemacht wurde
-              <>
-              <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
-              <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
-              <input className="text-right shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" value={trade.counterOffer || ''} onChange={(e) => handleCounterOfferChange(trade._id, e.target.value)} />
-              <button className="font-medium text-green-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
-              </>
-            )}
-            {(trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer) && (
-              // Akzeptieren, Ablehnen Optionen für den Empfänger, wenn beide Seiten Gegenangebote gemacht haben
-              <>
-              <button className="font-medium text-blue-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
-              <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
-              </>
-            )}
-          </>
-        )
-      )}
-    </td>
+                    {isCurrentUserTheSender(trade) ? (
+                        (!trade.senderAccepted && trade.receiverAccepted && !trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer) ? (
+                        <>
+                            <button className="font-medium text-green-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+                            <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+                            <div className="flex items-center mr-2">
+                            <span className="absolute ml-3 text-gray-700">€</span>
+                            <input 
+                                type="text" 
+                                className="shadow appearance-none border rounded w-32 py-2 pl-8 pr-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                value={trade.counterOffer || ''} 
+                                onChange={(e) => handleCounterOfferChange(trade._id, e.target.value.replace(/[^0-9,.]/g, ''))}
+                                onBlur={(e) => handleCounterOfferChange(trade._id, parseFloat(e.target.value.replace(',', '.')).toFixed(2))}
+                                placeholder="0,00"
+                            />
+                            </div>
+                            <button className="font-medium text-blue-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
+                        </>
+                        ) : (
+                        <span>Keine Aktion momentan verfügbar</span>
+                        )
+                    ) : (
+                        (trade.senderAccepted && !trade.receiverAccepted) ? (
+                        <>
+                            {(!trade.senderHasMadeCounterOffer && !trade.receiverHasMadeCounterOffer) ? (
+                            <>
+                                <button className="font-medium text-green-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+                                <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+                                <div className="flex items-center mr-2">
+                                <span className="absolute ml-3 text-gray-700">€</span>
+                                <input 
+                                    type="text" 
+                                    className="shadow appearance-none border rounded w-32 py-2 pl-8 pr-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    value={trade.counterOffer || ''} 
+                                    onChange={(e) => handleCounterOfferChange(trade._id, e.target.value.replace(/[^0-9,.]/g, ''))}
+                                    onBlur={(e) => handleCounterOfferChange(trade._id, parseFloat(e.target.value.replace(',', '.')).toFixed(2))}
+                                    placeholder="0,00"
+                                />
+                                </div>
+                                <button className="font-medium text-blue-600 hover:underline" onClick={() => handleCounterOffer(trade._id, trade.counterOffer)}>Gegenangebot</button>
+                            </>
+                            ) : (
+                            trade.senderHasMadeCounterOffer && trade.receiverHasMadeCounterOffer && (
+                                <>
+                                <button className="font-medium text-green-600 hover:underline mr-2" onClick={() => handleAccept(trade._id)}>Akzeptieren</button>
+                                <button className="font-medium text-red-600 hover:underline mr-2" onClick={() => handleReject(trade._id)}>Ablehnen</button>
+                                </>
+                            )
+                            )}
+                        </>
+                        ) : (
+                        <span>Keine Aktion momentan verfügbar</span>
+                        )
+                    )}
+                    </td>
+
+
                     <td><button onClick={() => openModalWithTradeDetails(trade)} className="font-medium text-blue-600 hover:underline">Details anzeigen</button>
                     </td>
                   </tr>
