@@ -19,8 +19,7 @@ const Login = () => {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md mx-auto my-10 p-8 border rounded-lg shadow-lg">
-              <h1 className="text-xl font-bold mb-8 text-center">Login</h1>
-
+      <h1 className="text-xl font-bold mb-8 text-center">Login</h1>
       {/* Benutzername */}
       <div className="mb-6">
         <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900">Benutzername:</label>
