@@ -83,6 +83,9 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
     console.log(trade.sender._id);
     console.log(currentUser);
 
+    // Check if trade status is pending
+    const isTradePending = trade.status === 'pending';
+
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onClick={onClose}>
             <div className="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white" onClick={e => e.stopPropagation()}> {/* Anpassung der Breite */}
@@ -127,12 +130,23 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                     ))}
 
                     </div>
+                    {/* Sofern Trade im Status pending, Senden-Button aktiv sonst disabled.*/}
                     <div className="mt-4 flex">
-                        <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow mr-2"/>
-                        <button onClick={sendMessage} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        <input 
+                            type="text" 
+                            value={newMessage} 
+                            onChange={(e) => setNewMessage(e.target.value)} 
+                            className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow mr-2"
+                        />
+                        <button 
+                            onClick={sendMessage} 
+                            disabled={!isTradePending}
+                            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${!isTradePending ? 'bg-gray-500 hover:bg-gray-500 cursor-not-allowed' : ''}`}
+                        >
                             Senden
                         </button>
                     </div>
+
                     </> )}
                     <div className="items-center px-4 py-3 mt-4">
                         <button id="close-btn" className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" style={{ width: '100%' }} onClick={onClose}>
