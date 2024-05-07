@@ -11,7 +11,10 @@ const socket = io('http://localhost:8000', {
 const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const currentUser = localStorage.getItem('username');
+    const currentUser = JSON.parse(localStorage.getItem('user'))?.id;
+
+    console.log('Momentaner Benutzer:', currentUser);
+
 
     useEffect(() => {
         if (isOpen && trade) {
@@ -73,6 +76,13 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
         return !isNaN(date) ? `${date.toLocaleDateString()} - ${date.toLocaleTimeString()}` : 'Ungültiges Datum';
     };
 
+    
+    // Überprüfen, ob der aktuelle Benutzer der Sender oder Empfänger ist
+    const isUserInvolved = trade.sender._id === currentUser || trade.receiver._id === currentUser;
+
+    console.log(trade.sender._id);
+    console.log(currentUser);
+
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onClick={onClose}>
             <div className="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white" onClick={e => e.stopPropagation()}> {/* Anpassung der Breite */}
@@ -94,7 +104,9 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                         <DetailItem label="Gegenangebot-Historie" value={trade.offerHistory.map(offer => `${offer.toFixed(2)}€`).join(' → ')} isConfidential={trade.isConfidential} />
                     </div>
                     
-                    
+                    {/* Only render the chat section if the user is the sender or receiver */}
+                    {isUserInvolved && (
+                        <>
                     <hr className="my-4 border-t" />
                     <h3 className="text-lg leading-6 font-medium text-gray-900">Chat</h3>
                     {/* TODO: Dynamisch nach Socket.IO Connection-State implementieren */}
@@ -121,27 +133,29 @@ const TradeDetailsModal = ({ trade, isOpen, onClose }) => {
                             Senden
                         </button>
                     </div>
+                    </> )}
                     <div className="items-center px-4 py-3 mt-4">
                         <button id="close-btn" className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" style={{ width: '100%' }} onClick={onClose}>
                             Schließen
                         </button>
                     </div>
+                    
                 
             </div>
         </div>
     </div>
-);
-};
+    );
+    };
 
 
 const DetailItem = ({ label, value, status, isConfidential }) => (
-    <div className="flex justify-between items-center">
-      <span className="font-semibold">{label}:</span>
-      <span className={`${status === 'confirmed' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : status === 'pending' ? 'text-yellow-500' : 'text-gray-500'}`}>
-        {isConfidential ? "Vertraulich" : value}
-      </span>
-    </div>
-  );
-  
+ <div className="flex justify-between items-center">
+   <span className="font-semibold">{label}:</span>
+   <span className={`${status === 'confirmed' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : status === 'pending' ? 'text-yellow-500' : 'text-gray-500'}`}>
+     {isConfidential ? "Vertraulich" : value}
+   </span>
+ </div>
+);
+
 
 export default TradeDetailsModal;

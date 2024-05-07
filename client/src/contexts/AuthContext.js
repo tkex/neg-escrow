@@ -12,13 +12,11 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const { token } = authState;
-
     if (token) {
       fetch("http://localhost:8000/verifyToken", {
         method: "GET",
         headers: { "Authorization": `Bearer ${token}` },
-      })
-        .then(response => response.json())
+      }).then(response => response.json())
         .then(data => {
           if (data.username && data.userId) {
             setAuthState(prevState => ({
@@ -27,27 +25,27 @@ const AuthProvider = ({ children }) => {
             }));
             localStorage.setItem('user', JSON.stringify({ username: data.username, id: data.userId }));
           } else {
-            throw new Error("Token Verifikation fehlgeschlagen oder Userdaten nicht vollständig");
+            throw new Error("Token verification failed or incomplete user data");
           }
-        })
-        .catch(error => {
-          console.error("Token Verifikation fehlgeschlagen:", error);
-          logout(); 
+        }).catch(error => {
+          console.error("Token verification failed:", error);
+          logout();
         });
     }
-  }, [navigate, authState.token]);
+  }, [authState.token]);
 
   const login = async (username, password) => {
     try {
-      const response = await fetch("http://localhost:8000/login", { 
+      const response = await fetch("http://localhost:8000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
       if (response.ok) {
-        setAuthState({ user: { username }, token: data.token });
+        setAuthState({ user: { username, id: data.userId }, token: data.token });
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify({ username, id: data.userId }));
         navigate("/dashboard");
       } else {
         throw new Error(data.message);
@@ -56,6 +54,7 @@ const AuthProvider = ({ children }) => {
       alert(error.message);
     }
   };
+  
 
   const register = async (username, email, password) => {
     try {
@@ -66,26 +65,20 @@ const AuthProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
-        // Automatisches Einloggen nach Registrierung
         login(username, password);
-  
-        // Benutzer zur Login-Seite leiten statt eingeloggt bleiben
-        //alert("Registrierung erfolgreich. Bitte loggen Sie sich ein.");
-        //navigate("/login");
       } else {
-        throw new Error(data.message || "Registrierung fehlgeschlagen");
+        throw new Error(data.message || "Registration failed");
       }
     } catch (error) {
       alert(error.message);
     }
   };
-  
-
 
   const logout = () => {
     setAuthState({ user: null, token: null });
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
     navigate("/login");
   };
 
@@ -95,6 +88,7 @@ const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => useContext(AuthContext);
 
