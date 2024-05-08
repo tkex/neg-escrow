@@ -16,7 +16,7 @@ const GeneralLastTrades = ({ token }) => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/trades/global-lasttrades', {
+    fetch('http://localhost:8000/api/trades/trade/global-lasttrades', {
       headers: { 'Authorization': `Bearer ${token}` },
     })
       .then(response => response.json())

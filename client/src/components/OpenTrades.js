@@ -28,7 +28,7 @@ const OpenTrades = () => {
 
     const fetchOpenTrades = async () => {
         try {
-            const response = await fetch('http://localhost:8000/user/open-trades', {
+            const response = await fetch('http://localhost:8000/api/trades/trade/open-trades', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -62,7 +62,7 @@ const OpenTrades = () => {
     };
     const acceptTrade = async (tradeId) => {
         try {
-            const response = await fetch('http://localhost:8000/trade/accept', {
+            const response = await fetch('http://localhost:8000/api/trade/trade/accept', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -81,7 +81,7 @@ const OpenTrades = () => {
 
     const rejectTrade = async (tradeId) => {
         try {
-            const response = await fetch('http://localhost:8000/trade/reject', {
+            const response = await fetch('http://localhost:8000/api/trade/trade/reject', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -100,7 +100,7 @@ const OpenTrades = () => {
 
     const makeCounterOffer = async (tradeId, counterOffer) => {
         try {
-            const response = await fetch('http://localhost:8000/trade/counteroffer', {
+            const response = await fetch('http://localhost:8000/api/trades/trade/counteroffer', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,

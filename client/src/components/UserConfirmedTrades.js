@@ -16,7 +16,7 @@ const UserConfirmedTrades = ({ token }) => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/trades/confirmed', {
+    fetch('http://localhost:8000/api/trades/trade/confirmed', {
       method: 'GET',
       headers: { 
         'Authorization': `Bearer ${token}`,

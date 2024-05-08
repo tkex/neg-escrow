@@ -13,7 +13,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const { token } = authState;
     if (token) {
-      fetch("http://localhost:8000/verifyToken", {
+      fetch("http://localhost:8000/api/users/verifyToken", {
         method: "GET",
         headers: { "Authorization": `Bearer ${token}` },
       }).then(response => response.json())
@@ -36,7 +36,7 @@ const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await fetch("http://localhost:8000/login", {
+      const response = await fetch("http://localhost:8000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -58,7 +58,7 @@ const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password) => {
     try {
-      const response = await fetch("http://localhost:8000/register", {
+      const response = await fetch("http://localhost:8000/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),

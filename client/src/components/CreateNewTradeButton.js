@@ -21,12 +21,14 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:8000/users', {
+        const response = await fetch('http://localhost:8000/api/users/users', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
+
         if (!response.ok) {
           throw new Error('Benutzerdaten konnten nicht geladen werden');
         }
+        
         const data = await response.json();
          // Filtere den aktuell eingeloggten Benutzer in der Auswahlliste
         const filteredUsers = data.filter(u => u._id !== user.id);
@@ -51,7 +53,7 @@ const CreateNewTradeButton = ({ onClose, onSuccess }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/trade/request', {
+      const response = await fetch('http://localhost:8000/api/trades/trade/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

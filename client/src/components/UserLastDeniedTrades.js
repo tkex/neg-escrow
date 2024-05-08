@@ -17,7 +17,7 @@ const UserLastDeniedTrades = ({ token }) => {
 
 
   useEffect(() => {
-    fetch('http://localhost:8000/trades/denied', {
+    fetch('http://localhost:8000/api/trades/trade/denied', {
       method: 'GET',
       headers: { 
         'Authorization': `Bearer ${token}`,

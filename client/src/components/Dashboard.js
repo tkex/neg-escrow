@@ -8,7 +8,7 @@ import UserLastDeniedTrades from './UserLastDeniedTrades';
 import UserConfirmedTrades from './UserConfirmedTrades';
 import UserLastClosedTrades from './UserLastClosedTrades';
 
-import { FaPlus, FaMinus } from 'react-icons/fa';
+
 
 // Hook für das Abrufen der Handelszahlen
 const useTradeCount = (url, token) => {
@@ -36,9 +36,9 @@ const Dashboard = () => {
   const toggleOpenTrades = () => setShowOpenTrades(!showOpenTrades);
 
  // Hook, um die Anzahlen abzurufen
- const openTradesCount = useTradeCount('http://localhost:8000/trades/count/open', token);
- const closedTradesCount = useTradeCount('http://localhost:8000/trades/count/closed', token);
- const totalTradesCount = useTradeCount('http://localhost:8000/trades/count/total', token);
+ const openTradesCount = useTradeCount('http://localhost:8000/api/trades/trade/count/open', token);
+ const closedTradesCount = useTradeCount('http://localhost:8000/api/trades/trade/count/closed', token);
+ const totalTradesCount = useTradeCount('http://localhost:8000/api/trades/trade/count/total', token);
 
  return (
 <div className="max-w-7xl mx-auto my-10 p-5 border rounded-lg shadow-lg">

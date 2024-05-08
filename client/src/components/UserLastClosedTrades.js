@@ -16,7 +16,7 @@ const UserLastClosedTrades = ({ token }) => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/trades/closed', {
+    fetch('http://localhost:8000/api/trades/trade/closed', {
       method: 'GET',
       headers: { 
         'Authorization': `Bearer ${token}`,
