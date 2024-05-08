@@ -9,6 +9,12 @@ import cors from 'cors';
 import { createServer } from "http";
 import { Server } from "socket.io";
 
+
+import { UserModel } from './models/User.js';
+import { TradeModel } from './models/Trade.js';
+import { Chat } from './models/Chat.js';
+
+
 const app = express();
 dotenv.config();
 
@@ -45,27 +51,7 @@ mongoose.connect(MONGOURL)
 
   
 
-const userSchema = new mongoose.Schema({
-    // Email vom Nutzer
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    }, 
-    // Benutzername vom Nutzer
-    username: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    // Passwort vom Nutzer
-    password: {
-        type: String,
-        required: true
-    }
-});
 
-const UserModel = mongoose.model("User", userSchema);
 
 // Route für User Abfrage (get)
 app.get("/users", async (req, res) => {
@@ -154,108 +140,6 @@ app.get("/verifyToken", authenticate, (req, res) => {
       .catch(error => res.status(500).json({ message: error.message }));
   });
 
-
-const tradeSchema = new mongoose.Schema({
-    // Sender
-    sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    // Empfänger
-    receiver: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    // Typ der Verhandlung
-    tradeType: {
-        type: String,
-        enum: ['Angebot'],
-        required: true
-    },
-    // Betreff der Anfrage
-    subject: {
-        type: String,
-        required: true,
-        maxlength: 100
-    },
-    // Beschreibung der Anfrage
-    description: {
-        type: String,
-        required: true,
-        maxlength: 100
-    },
-    // Mögliche Stati einer Verhandlung, standardgemäß "pending"
-    status: {
-        type: String,
-        enum: ['pending', 'accepted', 'rejected', 'confirmed', 'cancelled'],
-        default: 'pending'
-    },
-    // Verhandlungstatus vom Sender, standardgemäß: false
-    senderAccepted: {
-        type: Boolean,
-        default: false
-    },
-    // Verhandlungstatus vom Empfänger, standardgemäß: false
-    receiverAccepted: {
-        type: Boolean,
-        default: false
-    },
-    // Datum-Zeitstempel
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    // Initialangebot vom Sender
-    initOffer: {
-        type: Number,
-        required: true
-    },
-     // Aktuelles Angebot -- entspricht am Anfang "initialOffer"
-    currentOffer: {
-        type: Number,
-        required: true
-    },
-    // Auflistung aller Angebote und Gegenangebote zwecks Nachvollziehung
-    offerHistory: [{
-        type: Number
-    }],
-    // Der endgültig akzeptierte Preis
-    acceptedPrice: {
-        type: Number,
-        default: null
-    },
-     // Zeigt, wer das letzte Angebot gemacht hat
-    lastOfferBy: {
-        type: String,
-        enum: ['sender', 'receiver'],
-        required: true
-    },
-    // Speichert, was das Gegenangebot ist
-    counterOffer: {
-        type: Number,
-        default: null
-    },
-    // Zur Überprüfung, ob ein Gegenangebot gemacht wurde
-    senderHasMadeCounterOffer: {
-        type: Boolean,
-        default: false
-    },
-    // *
-    receiverHasMadeCounterOffer: {
-        type: Boolean,
-        default: false
-    },
-    // Zur Definition, ob Verhandlung öffentlich oder privat sein soll
-    isConfidential: {
-        type: Boolean,
-        default: false,
-    },
-});
-
-    
-const TradeModel = mongoose.model("Trade", tradeSchema);
 
 
 // Route für Handelsanfrage senden
@@ -626,36 +510,7 @@ httpServer.listen(PORT, () => {
   });
 
 
-// Socket.IO Konfiguration
-const chatSchema = new mongoose.Schema({
-    tradeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'Trade'
-    },
-    messages: [{
-      sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-      },
-      receiver: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-      },
-      message: {
-        type: String,
-        required: true
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }]
-  });
-  
-  const Chat = mongoose.model("Chat", chatSchema);
+
 
 
 io.use((socket, next) => {
