@@ -4,7 +4,6 @@ import { TradeModel } from './models/Trade.js';
 export const setupCronJobs = () => {    
 
     // Ein Cron-Job (jede Stunde prüfen)
-    // Wenn refaktorisiert wird, dann Modelle in derselben Datei importieren dh. import { TradeModel } from './models/Trade';
     cron.schedule('0 * * * *', async () => {
 
         console.log('Cron-Job gestartet: Überprüfe Handelsanfragen auf Timeout.');
